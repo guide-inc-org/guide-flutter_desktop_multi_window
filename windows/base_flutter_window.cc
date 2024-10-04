@@ -341,6 +341,11 @@ void BaseFlutterWindow::SetAlwaysOnTop(const flutter::EncodableMap *args) {
                0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 }
 
+void BaseFlutterWindow::SetPreventFocus(const flutter::EncodableMap *args) {
+  bool isEnable = std::get<bool>(args->at(flutter::EncodableValue("isEnable")));
+  is_prevent_focus_ = isEnable;
+}
+
 void BaseFlutterWindow::SetOpacity(const flutter::EncodableMap *args) {
   double opacity = std::get<double>(args->at(flutter::EncodableValue("opacity")));
   HWND hWnd = GetWindowHandle();

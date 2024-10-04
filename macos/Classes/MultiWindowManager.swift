@@ -258,6 +258,14 @@ class MultiWindowManager {
     window.setAlwaysOnTop(args: args)
   }
 
+  func setPreventFocus(windowId: Int64, args: [String: Any]) {
+    guard let window = windows[windowId] else {
+      debugPrint("window \(windowId) not exists.")
+      return
+    }
+    window.setPreventFocus(args: args)
+  }
+
   func setOpacity(windowId: Int64, args: [String: Any]) {
     guard let window = windows[windowId] else {
       debugPrint("window \(windowId) not exists.")

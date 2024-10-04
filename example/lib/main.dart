@@ -251,8 +251,9 @@ class _SubWindowContentState extends State<SubWindowContent>
                 onPressed: () async {
                   isPreventClose = !isPreventClose;
                   widget.windowController.setPreventClose(isPreventClose);
-      
-                  isPreventClose = await widget.windowController.isPreventClose();
+
+                  isPreventClose =
+                      await widget.windowController.isPreventClose();
                   setState(() {});
                 },
                 child: Text(!isPreventClose
@@ -322,6 +323,19 @@ class _SubWindowContentState extends State<SubWindowContent>
                   });
                 },
                 child: Text('always on top ${isAlwaysOnTop ? 'off' : 'on'}'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final subWindowIds =
+                      await DesktopMultiWindow.getAllSubWindowIds();
+                  subWindowIds.add(0);
+                  subWindowIds.remove(widget.windowController.windowId);
+                  for (final windowId in subWindowIds) {
+                    WindowController.fromWindowId(windowId)
+                        .setPreventFocus(true);
+                  }
+                },
+                child: Text('prevent focus'),
               ),
               TextButton(
                 onPressed: () async {

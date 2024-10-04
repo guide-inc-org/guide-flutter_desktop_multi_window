@@ -41,6 +41,8 @@ class BaseFlutterWindow {
 
   void SetAlwaysOnTop(const flutter::EncodableMap *args);
 
+  void SetPreventFocus(const flutter::EncodableMap *args);
+
   void SetOpacity(const flutter::EncodableMap *args);
 
   void SetAsFrameless();
@@ -79,6 +81,7 @@ class BaseFlutterWindow {
   std::string title_bar_style_ = "normal";
   POINT minimum_size_ = {0, 0};
   double pixel_ratio_ = 1;
+  bool is_prevent_focus_ = false;
 
   virtual HWND GetWindowHandle() = 0;
 

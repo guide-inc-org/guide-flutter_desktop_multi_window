@@ -234,4 +234,13 @@ class WindowControllerMainImpl extends WindowController {
     };
     await _channel.invokeMethod('setOpacity', arguments);
   }
+  
+  @override
+  Future<void> setPreventFocus(bool isEnable) async {
+    final Map<String, dynamic> arguments = {
+      'windowId': _id,
+      'isEnable': isEnable,
+    };
+    await _channel.invokeMethod('setPreventFocus', arguments);
+  }
 }

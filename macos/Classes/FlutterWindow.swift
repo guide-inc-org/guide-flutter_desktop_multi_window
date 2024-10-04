@@ -182,6 +182,11 @@ class BaseFlutterWindow: NSObject {
     }
   }
 
+  func setPreventFocus(args: [String: Any]) {
+    let isEnable: Bool = args["isEnable"] as! Bool
+    window.ignoresMouseEvents = isEnable;
+  }
+
   func setOpacity(_ args: [String: Any]) {
     let opacity: CGFloat = CGFloat(truncating: args["opacity"] as! NSNumber)
     window.alphaValue = opacity

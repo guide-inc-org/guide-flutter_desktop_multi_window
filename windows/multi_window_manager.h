@@ -55,6 +55,8 @@ class MultiWindowManager : public std::enable_shared_from_this<MultiWindowManage
 
   void SetAlwaysOnTop(int64_t id, const flutter::EncodableMap *args);
 
+  void SetPreventFocus(int64_t id, const flutter::EncodableMap *args);
+
   void SetOpacity(int64_t id, const flutter::EncodableMap *args);
 
   bool IsPreventClose(int64_t id);

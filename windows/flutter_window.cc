@@ -356,6 +356,18 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
       }
       return 0;
     }
+    case WM_WINDOWPOSCHANGING: {
+      if (is_prevent_focus_) {
+        WINDOWPOS *pPos = (WINDOWPOS *)lparam;
+        // Check if the window is being brought to the top (SWP_NOZORDER is NOT set)
+        if (!(pPos->flags & SWP_NOZORDER))
+        {
+          // Prevent the window from being brought to the top
+          pPos->flags |= SWP_NOZORDER;
+        }
+      }
+      break;
+    }
     case WM_SIZING: {
         EmitEvent("resize");
         break;
