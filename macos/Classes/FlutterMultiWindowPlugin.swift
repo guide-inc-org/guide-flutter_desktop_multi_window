@@ -70,6 +70,12 @@ public class FlutterMultiWindowPlugin: NSObject, FlutterPlugin {
       rect.topLeft.y = rect.origin.y
       MultiWindowManager.shared.setFrame(windowId: windowId, frame: rect)
       result(nil)
+    case "setHeight":
+      let arguments = call.arguments as! [String: Any?]
+      let windowId = arguments["windowId"] as! Int64
+      let height = arguments["height"] as! Double
+      MultiWindowManager.shared.setHeight(windowId: windowId, height: height)
+      result(nil)
     case "getFrame":
       let arguments = call.arguments as! [String: Any?]
       let windowId = arguments["windowId"] as! Int64

@@ -104,6 +104,18 @@ class BaseFlutterWindow: NSObject {
     window.setFrame(frame, display: false, animate: true)
   }
 
+  func setHeight(height: Double) {
+    var frame = getFrame()
+    let left = frame["x"] as! Double
+    let top = frame["y"] as! Double
+    let width = frame["width"] as! Double
+    var rect = NSRect(x: left, y: top, width: width, height: height)
+    rect.topLeft.x = rect.origin.x
+    rect.topLeft.y = rect.origin.y
+
+    window.setFrame(rect, display: false, animate: true)
+  }
+
   func getFrame() -> NSDictionary {
     let frameRect: NSRect = window.frame;
     

@@ -55,6 +55,14 @@ class WindowControllerMainImpl extends WindowController {
   }
 
   @override
+  Future<void> setHeight(double height) {
+    return _channel.invokeMethod('setHeight', <String, dynamic>{
+      'windowId': _id,
+      'height': height,
+    });
+  }
+
+  @override
   Future<Rect> getFrame() async {
     final Map<String, dynamic> arguments = {
       'windowId': _id,

@@ -123,6 +123,13 @@ void MultiWindowManager::SetFrame(int64_t id, double x, double y, double width, 
   }
 }
 
+void MultiWindowManager::SetHeight(int64_t id, double height) {
+  auto window = windows_.find(id);
+  if (window != windows_.end()) {
+    window->second->SetHeight(height);
+  }
+}
+
 flutter::EncodableMap MultiWindowManager::GetFrame(int64_t id) {
   auto window = windows_.find(id);
   if (window != windows_.end()) {

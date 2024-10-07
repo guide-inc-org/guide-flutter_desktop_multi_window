@@ -190,6 +190,14 @@ class MultiWindowManager {
     window.setFrame(frame: frame)
   }
 
+  func setHeight(windowId: Int64, height: Double) {
+    guard let window = windows[windowId] else {
+      debugPrint("window \(windowId) not exists.")
+      return
+    }
+    window.setHeight(height: height)
+  }
+
   func getFrame(windowId: Int64) -> NSDictionary {
     guard let window = windows[windowId] else {
       debugPrint("window \(windowId) not exists.")

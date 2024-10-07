@@ -409,6 +409,24 @@ void BaseFlutterWindow::SetBounds(double_t x, double_t y, double_t width, double
              TRUE);
 }
 
+void BaseFlutterWindow::SetHeight(double_t height) {
+  auto handle = GetWindowHandle();
+  if (!handle) {
+    return;
+  }
+  // Get the current window position and size
+  RECT rect;
+  if (GetWindowRect(handle, &rect)) {
+      // Calculate the current width and X, Y positions
+      int width = rect.right - rect.left;
+      int x = rect.left;
+      int y = rect.top;
+      
+      // Adjust the window size to the new height while keeping other dimensions the same
+      SetWindowPos(handle, nullptr, x, y, width, static_cast<int>(height), SWP_NOZORDER | SWP_NOMOVE);
+  }
+}
+
 flutter::EncodableMap BaseFlutterWindow::GetBounds() {
   flutter::EncodableMap resultMap = flutter::EncodableMap();
   auto handle = GetWindowHandle();

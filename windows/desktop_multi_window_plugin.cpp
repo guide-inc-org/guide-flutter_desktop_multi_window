@@ -85,6 +85,13 @@ void DesktopMultiWindowPlugin::HandleMethodCall(
     MultiWindowManager::Instance()->SetFrame(window_id, left, top, width, height);
     result->Success();
     return;
+  } else if (method_call.method_name() == "setHeight") {
+    auto *arguments = std::get_if<flutter::EncodableMap>(method_call.arguments());
+    auto window_id = arguments->at(flutter::EncodableValue("windowId")).LongValue();
+    auto height = std::get<double_t>(arguments->at(flutter::EncodableValue("height")));
+    MultiWindowManager::Instance()->SetHeight(window_id, height);
+    result->Success();
+    return;
   } else if (method_call.method_name() == "getFrame") {
     auto *arguments = std::get_if<flutter::EncodableMap>(method_call.arguments());
     auto window_id = arguments->at(flutter::EncodableValue("windowId")).LongValue();

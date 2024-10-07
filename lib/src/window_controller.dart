@@ -70,6 +70,9 @@ abstract class WindowController {
   /// Set the window frame rect.
   Future<void> setFrame(Rect frame);
 
+  /// Set the window height.
+  Future<void> setHeight(double height);
+
   /// Get the window frame rect.
   Future<Rect> getFrame() async {
     return Future.value(Rect.zero);
