@@ -156,39 +156,45 @@ public class FlutterMultiWindowPlugin: NSObject, FlutterPlugin {
       let res = MultiWindowManager.shared.isPreventClose(windowId: windowId)
       result(res)
     case "setPreventClose":
-      let arguments = call.arguments as! [String: Any?]
+      let arguments = call.arguments as! [String: Any]
       let windowId = arguments["windowId"] as! Int64
       let setPreventClose = arguments["setPreventClose"] as! Bool
       MultiWindowManager.shared.setPreventClose(windowId: windowId, setPreventClose: setPreventClose)
       result(nil)
     case "resizable":
-      let arguments = call.arguments as! [String: Any?]
+      let arguments = call.arguments as! [String: Any]
       let windowId = arguments["windowId"] as! Int64
       let resizable = arguments["resizable"] as! Bool
       MultiWindowManager.shared.resizable(windowId: windowId, resizable: resizable)
       result(nil)
     case "setMinimumSize":
-      let args = call.arguments as? [String: Any?] ?? [:]
+      let args = call.arguments as? [String: Any] ?? [:]
       let windowId = args["windowId"] as! Int64
       MultiWindowManager.shared.setMinimumSize(windowId: windowId, args: args)
       result(true)
       break
     case "setAlwaysOnTop":
-      let args = call.arguments as? [String: Any?] ?? [:]
+      let args = call.arguments as? [String: Any] ?? [:]
       let windowId = args["windowId"] as! Int64
       MultiWindowManager.shared.setAlwaysOnTop(windowId: windowId, args: args)
       result(true)
       break
     case "setPreventFocus":
-      let args = call.arguments as? [String: Any?] ?? [:]
+      let args = call.arguments as? [String: Any] ?? [:]
       let windowId = args["windowId"] as! Int64
       MultiWindowManager.shared.setPreventFocus(windowId: windowId, args: args)
       result(true)
       break
     case "setOpacity":
-      let args = call.arguments as? [String: Any?] ?? [:]
+      let args = call.arguments as? [String: Any] ?? [:]
       let windowId = args["windowId"] as! Int64
       MultiWindowManager.shared.setOpacity(windowId: windowId, args: args)
+      result(true)
+      break
+    case "setBackgroundColor":
+      let args = call.arguments as? [String: Any] ?? [:]
+      let windowId = args["windowId"] as! Int64
+      MultiWindowManager.shared.setBackgroundColor(windowId: windowId, args: args)
       result(true)
       break
     default:

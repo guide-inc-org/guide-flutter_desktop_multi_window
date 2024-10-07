@@ -228,6 +228,11 @@ void DesktopMultiWindowPlugin::HandleMethodCall(
     auto window_id = arguments->at(flutter::EncodableValue("windowId")).LongValue();
     MultiWindowManager::Instance()->SetOpacity(window_id, arguments);
     result->Success();
+  } else if (method_call.method_name() == "setBackgroundColor") {
+    auto *arguments = std::get_if<flutter::EncodableMap>(method_call.arguments());
+    auto window_id = arguments->at(flutter::EncodableValue("windowId")).LongValue();
+    MultiWindowManager::Instance()->SetBackgroundColor(window_id, arguments);
+    result->Success();
   }
   result->NotImplemented();
 }

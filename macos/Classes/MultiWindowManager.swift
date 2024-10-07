@@ -281,6 +281,14 @@ class MultiWindowManager {
     }
     window.setOpacity(args)
   }
+
+  func setBackgroundColor(windowId: Int64, args: [String: Any]) {
+    guard let window = windows[windowId] else {
+      debugPrint("window \(windowId) not exists.")
+      return
+    }
+    window.setBackgroundColor(args: args)
+  }
 }
 
 protocol WindowManagerDelegate: AnyObject {

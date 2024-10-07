@@ -251,4 +251,16 @@ class WindowControllerMainImpl extends WindowController {
     };
     await _channel.invokeMethod('setPreventFocus', arguments);
   }
+  
+  @override
+  Future<void> setBackgroundColor(Color color) async {
+     final Map<String, dynamic> arguments = {
+      'windowId': _id,
+      'a': color.alpha,
+      'r': color.red,
+      'g': color.green,
+      'b': color.blue,
+    };
+    await _channel.invokeMethod('setBackgroundColor', arguments);
+  }
 }

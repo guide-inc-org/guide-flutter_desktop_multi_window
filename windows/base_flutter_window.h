@@ -43,6 +43,8 @@ class BaseFlutterWindow {
 
   void SetPreventFocus(const flutter::EncodableMap *args);
 
+  void SetBackgroundColor(const flutter::EncodableMap *args);
+
   void SetOpacity(const flutter::EncodableMap *args);
 
   void SetAsFrameless();
@@ -85,6 +87,8 @@ class BaseFlutterWindow {
   POINT minimum_size_ = {0, 0};
   double pixel_ratio_ = 1;
   bool is_prevent_focus_ = false;
+  COLORREF window_background_color_ = RGB(255, 255, 255);
+  bool is_reset_bg_ = false;
 
   virtual HWND GetWindowHandle() = 0;
 

@@ -105,7 +105,7 @@ class BaseFlutterWindow: NSObject {
   }
 
   func setHeight(height: Double) {
-    var frame = getFrame()
+    let frame = getFrame()
     let left = frame["x"] as! Double
     let top = frame["y"] as! Double
     let width = frame["width"] as! Double
@@ -202,6 +202,26 @@ class BaseFlutterWindow: NSObject {
   func setOpacity(_ args: [String: Any]) {
     let opacity: CGFloat = CGFloat(truncating: args["opacity"] as! NSNumber)
     window.alphaValue = opacity
+  }
+
+  func setBackgroundColor(args: [String: Any]) {
+    let colorA = args["a"] as! Int
+    let colorR = args["r"] as! Int
+    let colorG = args["g"] as! Int
+    let colorB = args["b"] as! Int
+    
+    let isTransparent: Bool = colorA == 0 && colorR == 0 && colorG == 0 && colorB == 0;
+    
+    if (isTransparent) {
+      window.backgroundColor = NSColor.clear
+    } else {
+      let rgbR = CGFloat(colorR) / 255
+      let rgbG = CGFloat(colorG) / 255
+      let rgbB = CGFloat(colorB) / 255
+      let rgbA = CGFloat(colorA) / 255
+      
+      window.backgroundColor = NSColor(red: rgbR, green: rgbG, blue: rgbB, alpha: rgbA)
+    }
   }
 }
 

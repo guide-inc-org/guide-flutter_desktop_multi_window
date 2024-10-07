@@ -346,6 +346,16 @@ void BaseFlutterWindow::SetPreventFocus(const flutter::EncodableMap *args) {
   is_prevent_focus_ = isEnable;
 }
 
+void BaseFlutterWindow::SetBackgroundColor(const flutter::EncodableMap *args) {
+  int colorA = std::get<int>(args->at(flutter::EncodableValue("a")));
+  int colorR = std::get<int>(args->at(flutter::EncodableValue("r")));
+  int colorG = std::get<int>(args->at(flutter::EncodableValue("g")));
+  int colorB = std::get<int>(args->at(flutter::EncodableValue("b")));
+  bool isTransparent = colorA == 0 && colorR == 0 && colorG == 0 && colorB == 0;
+  is_reset_bg_ = isTransparent;
+  window_background_color_ = RGB(colorR, colorG, colorB);
+}
+
 void BaseFlutterWindow::SetOpacity(const flutter::EncodableMap *args) {
   double opacity = std::get<double>(args->at(flutter::EncodableValue("opacity")));
   HWND hWnd = GetWindowHandle();

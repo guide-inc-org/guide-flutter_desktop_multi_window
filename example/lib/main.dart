@@ -86,6 +86,7 @@ class _ExampleMainWindowState extends State<_ExampleMainWindow> {
                       'bussiness': 'bussiness_test',
                     }));
                     window
+                      ..setBackgroundColor(Colors.green)
                       ..setFrame(const Offset(0, 0) & const Size(1280, 720))
                       ..center()
                       ..setTitle('Another window')
