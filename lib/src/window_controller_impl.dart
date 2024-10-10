@@ -263,4 +263,13 @@ class WindowControllerMainImpl extends WindowController {
     };
     await _channel.invokeMethod('setBackgroundColor', arguments);
   }
+  
+  @override
+  Future<void> setSkipTaskbar(bool isSkipTaskbar) async {
+    final Map<String, dynamic> arguments = {
+      'windowId': _id,
+      'isSkipTaskbar': isSkipTaskbar,
+    };
+    await _channel.invokeMethod('setSkipTaskbar', arguments);
+  }
 }

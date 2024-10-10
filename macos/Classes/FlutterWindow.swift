@@ -223,6 +223,12 @@ class BaseFlutterWindow: NSObject {
       window.backgroundColor = NSColor(red: rgbR, green: rgbG, blue: rgbB, alpha: rgbA)
     }
   }
+
+  func setSkipTaskbar(_ args: [String: Any]) {
+    let isSkipTaskbar: Bool = args["isSkipTaskbar"] as! Bool
+    window.collectionBehavior = [.transient, .ignoresCycle]
+    window.isExcludedFromWindowsMenu = true
+  }
 }
 
 /// Add extra hooks for window

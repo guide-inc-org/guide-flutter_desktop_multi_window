@@ -289,6 +289,14 @@ class MultiWindowManager {
     }
     window.setBackgroundColor(args: args)
   }
+
+  func setSkipTaskbar(windowId: Int64, args: [String: Any]) {
+    guard let window = windows[windowId] else {
+      debugPrint("window \(windowId) not exists.")
+      return
+    }
+    window.setSkipTaskbar(args)
+  }
 }
 
 protocol WindowManagerDelegate: AnyObject {

@@ -197,6 +197,12 @@ public class FlutterMultiWindowPlugin: NSObject, FlutterPlugin {
       MultiWindowManager.shared.setBackgroundColor(windowId: windowId, args: args)
       result(true)
       break
+    case "setSkipTaskbar":
+      let args = call.arguments as? [String: Any] ?? [:]
+      let windowId = args["windowId"] as! Int64
+      MultiWindowManager.shared.setSkipTaskbar(windowId: windowId, args: args)
+      result(true)
+      break
     default:
       result(FlutterMethodNotImplemented)
     }

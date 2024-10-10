@@ -327,3 +327,10 @@ void MultiWindowManager::SetBackgroundColor(int64_t id, const flutter::Encodable
     return window->second->SetBackgroundColor(args);
   }
 }
+
+void MultiWindowManager::SetSkipTaskbar(int64_t id, const flutter::EncodableMap *args) {
+  auto window = windows_.find(id);
+  if (window != windows_.end()) {
+    return window->second->SetSkipTaskbar(args);
+  }
+}

@@ -45,6 +45,8 @@ class BaseFlutterWindow {
 
   void SetBackgroundColor(const flutter::EncodableMap *args);
 
+  void SetSkipTaskbar(const flutter::EncodableMap *args);
+
   void SetOpacity(const flutter::EncodableMap *args);
 
   void SetAsFrameless();

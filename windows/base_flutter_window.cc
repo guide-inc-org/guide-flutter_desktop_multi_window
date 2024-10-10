@@ -356,6 +356,15 @@ void BaseFlutterWindow::SetBackgroundColor(const flutter::EncodableMap *args) {
   window_background_color_ = RGB(colorR, colorG, colorB);
 }
 
+void BaseFlutterWindow::SetSkipTaskbar(const flutter::EncodableMap *args) {
+  bool isSkipTaskbar = std::get<bool>(args->at(flutter::EncodableValue("isSkipTaskbar")));
+  if (isSkipTaskbar) {
+    HWND hwnd = GetWindowHandle();
+    SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_TOOLWINDOW);
+    SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+  }
+}
+
 void BaseFlutterWindow::SetOpacity(const flutter::EncodableMap *args) {
   double opacity = std::get<double>(args->at(flutter::EncodableValue("opacity")));
   HWND hWnd = GetWindowHandle();

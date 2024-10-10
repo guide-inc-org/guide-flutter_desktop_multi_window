@@ -121,4 +121,7 @@ abstract class WindowController {
 
   /// Sets the background color of the window.
   Future<void> setBackgroundColor(Color color);
+
+  /// Makes the window not show in the taskbar / dock.
+  Future<void> setSkipTaskbar(bool isSkipTaskbar);
 }
