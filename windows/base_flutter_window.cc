@@ -173,9 +173,9 @@ void BaseFlutterWindow::Resizable(bool resizable) {
     }
     DWORD gwlStyle = GetWindowLong(window, GWL_STYLE);
     if (resizable) {
-      gwlStyle |= WS_THICKFRAME;
+      gwlStyle |= (WS_THICKFRAME | WS_MAXIMIZEBOX);
     } else {
-      gwlStyle &= ~WS_THICKFRAME;
+      gwlStyle &= ~(WS_THICKFRAME | WS_MAXIMIZEBOX);
     }
     ::SetWindowLong(window, GWL_STYLE, gwlStyle);
 }
