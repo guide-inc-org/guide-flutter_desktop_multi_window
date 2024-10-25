@@ -181,6 +181,13 @@ void MultiWindowManager::SetMinimumSize(int64_t id, const flutter::EncodableMap 
   }
 }
 
+void MultiWindowManager::SetMaximumSize(int64_t id, const flutter::EncodableMap *args) {
+  auto window = windows_.find(id);
+  if (window != windows_.end()) {
+    window->second->SetMaximumSize(args);
+  }
+}
+
 std::vector<int64_t> MultiWindowManager::GetAllSubWindowIds() {
   std::vector<int64_t> ids;
   for (auto &window : windows_) {

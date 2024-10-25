@@ -226,6 +226,17 @@ class WindowControllerMainImpl extends WindowController {
   }
 
   @override
+  Future<void> setMaximumSize(Size size) async {
+    final Map<String, dynamic> arguments = {
+      'windowId': _id,
+      'devicePixelRatio': getDevicePixelRatio(),
+      'width': size.width,
+      'height': size.height,
+    };
+    await _channel.invokeMethod('setMaximumSize', arguments);
+  }
+
+  @override
   Future<void> setAlwaysOnTop(bool isAlwaysOnTop) async {
     final Map<String, dynamic> arguments = {
       'windowId': _id,

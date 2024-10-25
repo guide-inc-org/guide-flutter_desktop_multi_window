@@ -182,6 +182,17 @@ class BaseFlutterWindow: NSObject {
     window.minSize = minSize
   }
 
+  func setMaximumSize(args: [String: Any]) {
+    let width = CGFloat((args["width"] as! NSNumber).floatValue)
+    let height = CGFloat((args["height"] as! NSNumber).floatValue)
+    
+    let maxSize: NSSize = NSSize(
+        width: width == -1 ? CGFloat.greatestFiniteMagnitude : width,
+        height: height == -1 ? CGFloat.greatestFiniteMagnitude : height
+    )
+    window.maxSize = maxSize
+  }
+
   func setAlwaysOnTop(args: [String: Any]) {
     let isAlwaysOnTop: Bool = args["isAlwaysOnTop"] as! Bool
     window.level = isAlwaysOnTop ? .floating : .normal

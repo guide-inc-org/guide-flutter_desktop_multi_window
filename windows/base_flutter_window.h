@@ -35,6 +35,8 @@ class BaseFlutterWindow {
 
   void SetMinimumSize(const flutter::EncodableMap *args);
 
+  void SetMaximumSize(const flutter::EncodableMap *args);
+
   void Maximize(const flutter::EncodableMap& args);
 
   void SetTitleBarStyle(const flutter::EncodableMap& args);
@@ -87,6 +89,7 @@ class BaseFlutterWindow {
 
   std::string title_bar_style_ = "normal";
   POINT minimum_size_ = {0, 0};
+  POINT maximum_size_ = {-1, -1};
   double pixel_ratio_ = 1;
   bool is_prevent_focus_ = false;
   COLORREF window_background_color_ = RGB(255, 255, 255);

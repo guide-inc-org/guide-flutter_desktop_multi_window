@@ -19,7 +19,7 @@
 /// RustDesk deps using method channel
 // #include <bitsdojo_window_windows/bitsdojo_window_plugin.h>
 #include <url_launcher_windows/url_launcher_windows.h>
-#include <window_size/window_size_plugin.h>
+// #include <window_size/window_size_plugin.h>
 #include <texture_rgba_renderer/texture_rgba_renderer_plugin_c_api.h>
 // #include <window_manager/window_manager_plugin.h>
 // #include <screen_retriever/screen_retriever_plugin.h>
@@ -30,7 +30,7 @@ void RustDeskRegisterPlugins(flutter::PluginRegistry* registry) {
     //    registry->GetRegistrarForPlugin("BitsdojoWindowPlugin"));
     UrlLauncherWindowsRegisterWithRegistrar(
         registry->GetRegistrarForPlugin("UrlLauncherWindows"));
-    WindowSizePluginRegisterWithRegistrar(registry->GetRegistrarForPlugin("WindowSizePlugin"));
+    // WindowSizePluginRegisterWithRegistrar(registry->GetRegistrarForPlugin("WindowSizePlugin"));
     TextureRgbaRendererPluginCApiRegisterWithRegistrar(registry->GetRegistrarForPlugin("TextureRgbaRendererPlugin"));
     // WindowManagerPluginRegisterWithRegistrar(
     //     registry->GetRegistrarForPlugin("WindowManagerPlugin"));
@@ -286,6 +286,11 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
         info->ptMinTrackSize.x = static_cast<LONG> (this->minimum_size_.x * this->pixel_ratio_);
       if (this->minimum_size_.y != 0)
         info->ptMinTrackSize.y = static_cast<LONG> (this->minimum_size_.y * this->pixel_ratio_);
+      
+      if (this->maximum_size_.x != -1)
+        info->ptMaxTrackSize.x = static_cast<LONG>(this->maximum_size_.x * this->pixel_ratio_);
+      if (this->maximum_size_.y != -1)
+        info->ptMaxTrackSize.y = static_cast<LONG>(this->maximum_size_.y * this->pixel_ratio_);
       break;
     }
     case WM_DPICHANGED: {

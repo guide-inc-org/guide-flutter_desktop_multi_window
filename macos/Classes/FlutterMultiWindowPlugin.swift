@@ -173,6 +173,12 @@ public class FlutterMultiWindowPlugin: NSObject, FlutterPlugin {
       MultiWindowManager.shared.setMinimumSize(windowId: windowId, args: args)
       result(true)
       break
+    case "setMaximumSize":
+      let args = call.arguments as? [String: Any] ?? [:]
+      let windowId = args["windowId"] as! Int64
+      MultiWindowManager.shared.setMaximumSize(windowId: windowId, args: args)
+      result(true)
+      break
     case "setAlwaysOnTop":
       let args = call.arguments as? [String: Any] ?? [:]
       let windowId = args["windowId"] as! Int64
