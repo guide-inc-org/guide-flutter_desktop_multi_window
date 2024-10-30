@@ -372,6 +372,13 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
       }
       break;
     }
+    case WM_SYSCOMMAND: {
+        // Check if the command is for minimizing the window
+        if (is_prevent_focus_ && (wparam & 0xFFF0) == SC_MINIMIZE) {
+            // Prevent the window from minimizing
+            return 0;
+        }
+    }
     case WM_SIZING: {
         EmitEvent("resize");
         break;
