@@ -181,13 +181,13 @@ void BaseFlutterWindow::Resizable(bool resizable) {
 }
 
 void BaseFlutterWindow::SetMinimumSize(const flutter::EncodableMap *args) {
-  double devicePixelRatio =
-      std::get<double>(args->at(flutter::EncodableValue("devicePixelRatio")));
+  // double devicePixelRatio =
+  //     std::get<double>(args->at(flutter::EncodableValue("devicePixelRatio")));
   double width = std::get<double>(args->at(flutter::EncodableValue("width")));
   double height = std::get<double>(args->at(flutter::EncodableValue("height")));
 
   if (width >= 0 && height >= 0) {
-    pixel_ratio_ = devicePixelRatio;
+    // pixel_ratio_ = devicePixelRatio;
     POINT point = {};
     point.x = static_cast<LONG>(width);
     point.y = static_cast<LONG>(height);
@@ -196,13 +196,13 @@ void BaseFlutterWindow::SetMinimumSize(const flutter::EncodableMap *args) {
 }
 
 void BaseFlutterWindow::SetMaximumSize(const flutter::EncodableMap *args) {
-  double devicePixelRatio =
-      std::get<double>(args->at(flutter::EncodableValue("devicePixelRatio")));
+  // double devicePixelRatio =
+  //     std::get<double>(args->at(flutter::EncodableValue("devicePixelRatio")));
   double width = std::get<double>(args->at(flutter::EncodableValue("width")));
   double height = std::get<double>(args->at(flutter::EncodableValue("height")));
 
   // if (width >= 0 && height >= 0) {
-    pixel_ratio_ = devicePixelRatio;
+    // pixel_ratio_ = devicePixelRatio;
     POINT point = {};
     point.x = static_cast<LONG>(width);
     point.y = static_cast<LONG>(height);
@@ -437,9 +437,9 @@ void BaseFlutterWindow::SetBounds(double_t x, double_t y, double_t width, double
       ShowWindow(handle, SW_RESTORE);
     }
   }
-  MoveWindow(handle, int32_t(x), int32_t(y),
-             static_cast<int>(width),
-             static_cast<int>(height),
+  MoveWindow(handle, static_cast<int>(x * pixel_ratio_), static_cast<int>(y * pixel_ratio_),
+             static_cast<int>(width * pixel_ratio_ + 16),
+             static_cast<int>(height * pixel_ratio_ + 9),
              TRUE);
 }
 
@@ -457,7 +457,7 @@ void BaseFlutterWindow::SetHeight(double_t height) {
       int y = rect.top;
       
       // Adjust the window size to the new height while keeping other dimensions the same
-      SetWindowPos(handle, nullptr, x, y, width, static_cast<int>(height), SWP_NOZORDER | SWP_NOMOVE);
+      SetWindowPos(handle, nullptr, x, y, width, static_cast<int>(height * pixel_ratio_ + 9), SWP_NOZORDER | SWP_NOMOVE);
   }
 }
 
@@ -467,10 +467,10 @@ flutter::EncodableMap BaseFlutterWindow::GetBounds() {
   if (handle) {
     RECT rect;
     if (GetWindowRect(handle, &rect)) {
-      double x = rect.left;
-      double y = rect.top;
-      double width = (rect.right - rect.left);
-      double height = (rect.bottom - rect.top);
+      double x = rect.left / pixel_ratio_;
+      double y = rect.top / pixel_ratio_;
+      double width = (rect.right - rect.left) / pixel_ratio_ - 16;
+      double height = (rect.bottom - rect.top) / pixel_ratio_ - 9;
       resultMap[flutter::EncodableValue("x")] = flutter::EncodableValue(x);
       resultMap[flutter::EncodableValue("y")] = flutter::EncodableValue(y);
       resultMap[flutter::EncodableValue("width")] =

@@ -129,6 +129,7 @@ FlutterWindow::FlutterWindow(
   HMONITOR monitor = MonitorFromPoint(target_point, MONITOR_DEFAULTTONEAREST);
   UINT dpi = FlutterDesktopGetDpiForMonitor(monitor);
   scale_factor_ = dpi / 96.0;
+  this->pixel_ratio_ = scale_factor_;
 
   HWND window_handle = CreateWindow(
       kFlutterWindowClassName, L"", WS_OVERLAPPEDWINDOW,
@@ -283,14 +284,14 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
       MINMAXINFO* info = reinterpret_cast<MINMAXINFO*>(lparam);
       // For the special "unconstrained" values, leave the defaults.
       if (this->minimum_size_.x != 0)
-        info->ptMinTrackSize.x = static_cast<LONG> (this->minimum_size_.x * this->pixel_ratio_);
+        info->ptMinTrackSize.x = static_cast<LONG> (this->minimum_size_.x * this->pixel_ratio_ + 16);
       if (this->minimum_size_.y != 0)
-        info->ptMinTrackSize.y = static_cast<LONG> (this->minimum_size_.y * this->pixel_ratio_);
+        info->ptMinTrackSize.y = static_cast<LONG> (this->minimum_size_.y * this->pixel_ratio_ + 9);
       
       if (this->maximum_size_.x != -1)
-        info->ptMaxTrackSize.x = static_cast<LONG>(this->maximum_size_.x * this->pixel_ratio_);
+        info->ptMaxTrackSize.x = static_cast<LONG>(this->maximum_size_.x * this->pixel_ratio_ + 16);
       if (this->maximum_size_.y != -1)
-        info->ptMaxTrackSize.y = static_cast<LONG>(this->maximum_size_.y * this->pixel_ratio_);
+        info->ptMaxTrackSize.y = static_cast<LONG>(this->maximum_size_.y * this->pixel_ratio_ + 9);
       break;
     }
     case WM_DPICHANGED: {
