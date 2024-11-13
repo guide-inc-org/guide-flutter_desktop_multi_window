@@ -6,7 +6,7 @@
 
 #include <dwmapi.h>
 #include <iostream>
-// #include <shobjidl_core.h>
+#include <shobjidl_core.h>
 
 #pragma comment(lib, "dwmapi.lib")
 
@@ -375,8 +375,21 @@ void BaseFlutterWindow::SetSkipTaskbar(const flutter::EncodableMap *args) {
   bool isSkipTaskbar = std::get<bool>(args->at(flutter::EncodableValue("isSkipTaskbar")));
   if (isSkipTaskbar) {
     HWND hwnd = GetWindowHandle();
-    SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_TOOLWINDOW);
-    SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+    // Initialize COM library
+    CoInitialize(nullptr);
+    // Create an ITaskbarList instance
+    ITaskbarList* pTaskbar = nullptr;
+    HRESULT hr = CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pTaskbar));
+    if (SUCCEEDED(hr) && pTaskbar) {
+      // Initialize the taskbar list
+      pTaskbar->HrInit();
+      // Remove the window from the taskbar
+      pTaskbar->DeleteTab(hwnd);
+      // Release the ITaskbarList instance
+      pTaskbar->Release();
+    }
+    // Uninitialize COM library
+    CoUninitialize();
   }
 }
 
