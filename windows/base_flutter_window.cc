@@ -508,7 +508,8 @@ void BaseFlutterWindow::Close() {
   if (!handle) {
     return;
   }
-  PostMessage(handle, WM_SYSCOMMAND, SC_CLOSE, 0);
+  // PostMessage(handle, WM_SYSCOMMAND, SC_CLOSE, 0);
+  PostMessage(handle, WM_CLOSE, 0, 0);
 }
 
 void BaseFlutterWindow::Show() {
