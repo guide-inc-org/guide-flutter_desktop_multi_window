@@ -103,6 +103,11 @@ void DesktopMultiWindowPlugin::HandleMethodCall(
     MultiWindowManager::Instance()->Center(window_id);
     result->Success();
     return;
+  } else if (method_call.method_name() == "forceChildRefresh") {
+    auto window_id = method_call.arguments()->LongValue();
+    MultiWindowManager::Instance()->ForceChildRefresh(window_id);
+    result->Success();
+    return;
   } else if (method_call.method_name() == "setTitle") {
     auto *arguments = std::get_if<flutter::EncodableMap>(method_call.arguments());
     auto window_id = arguments->at(flutter::EncodableValue("windowId")).LongValue();

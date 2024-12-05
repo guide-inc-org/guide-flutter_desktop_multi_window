@@ -80,6 +80,10 @@ abstract class WindowController {
 
   /// Center the window on the screen.
   Future<void> center();
+  
+  /// only support Windows
+  /// To fix broken ui when update from flutter 3.19.6 => 3.2x
+  Future<void> forceChildRefresh();
 
   /// Set the window's title.
   Future<void> setTitle(String title);

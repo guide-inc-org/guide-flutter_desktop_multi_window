@@ -153,6 +153,13 @@ void MultiWindowManager::Center(int64_t id) {
   }
 }
 
+void MultiWindowManager::ForceChildRefresh(int64_t id) {
+  auto window = windows_.find(id);
+  if (window != windows_.end()) {
+    window->second->ForceChildRefresh();
+  }
+}
+
 void MultiWindowManager::Focus(int64_t id) {
   auto window = windows_.find(id);
   if (window != windows_.end()) {

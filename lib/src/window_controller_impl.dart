@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
@@ -41,6 +42,13 @@ class WindowControllerMainImpl extends WindowController {
   @override
   Future<void> center() {
     return _channel.invokeMethod('center', _id);
+  }
+
+  @override
+  Future<void> forceChildRefresh() async {
+    if(Platform.isWindows) {
+      return _channel.invokeMethod('forceChildRefresh', _id);
+    }
   }
 
   @override
@@ -283,4 +291,5 @@ class WindowControllerMainImpl extends WindowController {
     };
     await _channel.invokeMethod('setSkipTaskbar', arguments);
   }
+  
 }
