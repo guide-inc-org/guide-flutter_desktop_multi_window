@@ -288,8 +288,21 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
       if (this->minimum_size_.y != 0)
         info->ptMinTrackSize.y = static_cast<LONG> (this->minimum_size_.y * this->pixel_ratio_ + 9);
       
-      if (this->maximum_size_.x != -1)
+      if (this->maximum_size_.x != -1) {
         info->ptMaxTrackSize.x = static_cast<LONG>(this->maximum_size_.x * this->pixel_ratio_ + 16);
+        if (this->maximum_size_.y == -1) {
+          // Get monitor info
+          // HMONITOR hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+          // MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
+          // GetMonitorInfo(hMonitor, &monitorInfo);
+          // // Work area (excluding the taskbar)
+          // RECT workArea = monitorInfo.rcWork;
+          // // fix: https://guide.backlog.com/view/SBIFX-7951
+          // info->ptMaxTrackSize.y = workArea.bottom + 16; // Full height excluding taskbar
+          NCCALCSIZE_PARAMS* sz = reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam);
+          info->ptMaxTrackSize.y = sz->rgrc[0].bottom; // Full height excluding taskbar
+        }
+      }
       if (this->maximum_size_.y != -1)
         info->ptMaxTrackSize.y = static_cast<LONG>(this->maximum_size_.y * this->pixel_ratio_ + 9);
       break;
