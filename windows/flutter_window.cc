@@ -160,6 +160,7 @@ FlutterWindow::FlutterWindow(
   if (_g_window_created_callback) {
     _g_window_created_callback(flutter_controller_.get());
   }
+  flutter_controller_->ForceRedraw();
 
   // hide the window when created.
   ShowWindow(window_handle, SW_HIDE);
