@@ -79,6 +79,8 @@ class MultiWindowManager : public std::enable_shared_from_this<MultiWindowManage
 
   void Center(int64_t id);
 
+  void ForceChildRefresh(int64_t id);
+
   void SetTitle(int64_t id, const std::string &title);
 
   std::vector<int64_t> GetAllSubWindowIds();
