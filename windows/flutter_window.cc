@@ -1,9 +1,10 @@
 //
 // Created by yangbin on 2022/1/11.
 //
-
+#include <windows.h>
+#include <cmath> // For sqrt
 #include "flutter_window.h"
-
+#include "multi_window_manager.h"
 #include "flutter_windows.h"
 
 #include "tchar.h"
@@ -185,6 +186,48 @@ LRESULT CALLBACK FlutterWindow::WndProc(HWND window, UINT message, WPARAM wparam
   }
 
   return DefWindowProc(window, message, wparam, lparam);
+}
+
+bool IsWindowCovered(HWND hwnd)
+{
+  RECT rect;
+  if (!GetWindowRect(hwnd, &rect))
+  {
+    return true; // Assume covered if we can't get the rect
+  }
+
+  // Check key points: Top-left and center
+  POINT topLeft = {rect.left + 5, rect.top + 5};
+  POINT bottomRight = {rect.right - 5, rect.bottom - 5};
+
+  HWND topLeftWindow = WindowFromPoint(topLeft);
+  HWND bottomRightWindow = WindowFromPoint(bottomRight);
+
+  // If both key points do not belong to our window, it's covered
+  return (topLeftWindow != hwnd && bottomRightWindow != hwnd);
+}
+
+bool IsMaximizedCheck(HWND hwnd)
+{
+  RECT windowRect;
+  if (GetWindowRect(hwnd, &windowRect))
+  {
+    HMONITOR hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+    MONITORINFO mi = {0};
+    mi.cbSize = sizeof(mi);
+    if (GetMonitorInfo(hMonitor, &mi))
+    {
+      RECT workRect = mi.rcWork;
+      // Optionally allow for a tolerance if needed:
+      const int TOLERANCE = 2; // pixels
+      if (abs(windowRect.left - workRect.left) <= TOLERANCE &&
+          abs(windowRect.top - workRect.top) <= TOLERANCE)
+      {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
@@ -377,8 +420,88 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
       return 0;
     }
     case WM_WINDOWPOSCHANGING: {
-      if (is_prevent_focus_) {
-        WINDOWPOS *pPos = (WINDOWPOS *)lparam;
+      WINDOWPOS *pPos = (WINDOWPOS *)lparam;
+
+      double snapThreshold = 20;    // Distance threshold for snapping (pixels)
+
+    
+      double ratio = (14 * (4 - pixel_ratio_)) / 3;
+      double vertical_ratio = (5 * (4 - pixel_ratio_)) / 3;
+  
+      int margin = pixel_ratio_ == 1.5 ? 11 : int(round(ratio));
+      int margin_vertical = pixel_ratio_ == 1.5 ? 5 : int(round(vertical_ratio));
+  
+      // Check if velocity is slow enough for snapping
+    
+        MultiWindowManager *manager = MultiWindowManager::Instance();
+
+      if (manager)
+      {
+        int snappedX = pPos->x; // New X position after snapping
+        int snappedY = pPos->y; // New Y position after snapping
+
+        for (auto &w : manager->windows_)
+        {
+          HWND otherHwnd = w.second->GetWindowHandle();
+          // Ignore window "Toast" and "Dialog"
+          wchar_t title[256];
+          GetWindowText(otherHwnd, title, 256);
+          std::wstring titleW(title);
+          if (otherHwnd == hwnd || titleW == L"Toast" || titleW == L"Dialog" || !IsWindowVisible(otherHwnd) || IsWindowCovered(otherHwnd))
+          {
+            continue; // Skip itself
+          }
+          RECT otherRect;
+          GetWindowRect(otherHwnd, &otherRect);
+
+          // Check horizontal snapping (align left, right, or center)
+          if (abs(pPos->x - otherRect.right) < snapThreshold)
+          {
+            snappedX = otherRect.right - margin;
+          }
+          if (abs(pPos->x + pPos->cx - otherRect.left) < snapThreshold)
+          {
+            snappedX = otherRect.left - pPos->cx + margin;
+          }
+
+          // Check vertical snapping (align top, bottom, or middle)
+          if (abs(pPos->y - otherRect.bottom) < snapThreshold)
+          {
+            // Check if the window is a menu
+            // This is a workaround for the issue where the menu is not snapped correctly
+            bool isMenu = titleW == L"FLUTTERVIEW";
+
+            if (isMenu)
+            {
+              bool isMaximized = IsMaximizedCheck(otherHwnd);
+              if (isMaximized)
+              {
+                margin_vertical += int(round((otherRect.bottom % 2 == 0 ? 9 : 11) * pixel_ratio_));
+              }
+              else
+              {
+                margin_vertical += int(round(((otherRect.bottom - otherRect.top) % 2 == 0 ? 2 : 4) * pixel_ratio_));
+              }
+            }
+            snappedY = otherRect.bottom - margin_vertical;
+          }
+          if (abs(pPos->y + pPos->cy - otherRect.top) < snapThreshold)
+          {
+            snappedY = otherRect.top - pPos->cy + margin_vertical;
+          }
+        }
+
+        // Update position if snapping occurred
+        pPos->x = snappedX;
+        pPos->y = snappedY;
+      }
+        
+
+      // Check if velocity is slow enough for snapping
+
+      if (is_prevent_focus_)
+      {
+
         // Check if the window is being brought to the top (SWP_NOZORDER is NOT set)
         if (!(pPos->flags & SWP_NOZORDER))
         {
@@ -400,9 +523,10 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
         break;
     }
 
-    case WM_MOVING: {
+    case WM_MOVING:
+    {
         EmitEvent("move");
-        break;
+        break; 
     }
     case WM_NCACTIVATE: {
         char* eventName;

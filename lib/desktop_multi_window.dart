@@ -98,6 +98,18 @@ class DesktopMultiWindow {
     }
   }
 
+  static Future<Map<dynamic, dynamic>> getAllWindowPosition() async {
+    try {
+      final result =
+          await miltiWindowChannel.invokeMethod('getAllWindowsPosition');
+      final positions = result as Map<dynamic, dynamic>;
+      return positions;
+    } catch (e) {
+      print('Unreachable, plugin exception, func getAllWindowPosition(), $e');
+      return {};
+    }
+  }
+
   static final ObserverList<MultiWindowListener> _listeners =
       ObserverList<MultiWindowListener>();
 
