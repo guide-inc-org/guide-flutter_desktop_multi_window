@@ -21,6 +21,8 @@ class MultiWindowManager : public std::enable_shared_from_this<MultiWindowManage
 
   int64_t Create(std::string args);
 
+    std::map<int64_t, std::unique_ptr<BaseFlutterWindow>> windows_; // Accessible from anywhere
+
   void AttachFlutterMainWindow(HWND main_window_handle, std::unique_ptr<WindowChannel> window_channel);
 
   void Show(int64_t id);
@@ -92,8 +94,6 @@ class MultiWindowManager : public std::enable_shared_from_this<MultiWindowManage
   void StartResizing(int64_t id, const flutter::EncodableMap *params);
 
 private:
-
-  std::map<int64_t, std::unique_ptr<BaseFlutterWindow>> windows_;
 
   void HandleWindowChannelCall(
       int64_t from_window_id,

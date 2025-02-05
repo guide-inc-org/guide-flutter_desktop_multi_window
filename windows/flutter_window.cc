@@ -1,9 +1,11 @@
 //
 // Created by yangbin on 2022/1/11.
 //
-
+#include <chrono> // For time tracking
+#include <windows.h>
+#include <cmath> // For sqrt
 #include "flutter_window.h"
-
+#include "multi_window_manager.h"
 #include "flutter_windows.h"
 
 #include "tchar.h"
@@ -24,6 +26,7 @@
 // #include <window_manager/window_manager_plugin.h>
 // #include <screen_retriever/screen_retriever_plugin.h>
 // #include <tray_manager/tray_manager_plugin.h>
+using namespace std::chrono; // Use steady_clock for accurate time measurements
 
 void RustDeskRegisterPlugins(flutter::PluginRegistry* registry) {
     // BitsdojoWindowPluginRegisterWithRegistrar(
@@ -188,6 +191,9 @@ LRESULT CALLBACK FlutterWindow::WndProc(HWND window, UINT message, WPARAM wparam
 }
 
 LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
+  static POINT lastPos = {0, 0};                       // Store last mouse position
+  static auto lastTime = high_resolution_clock::now(); // Store last timestamp
+
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result = flutter_controller_->HandleTopLevelWindowProc(hwnd, message, wparam, lparam);
@@ -400,10 +406,91 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
         break;
     }
 
-    case WM_MOVING: {
-        EmitEvent("move");
-        break;
+    case WM_MOVING:
+  {
+    EmitEvent("move");
+    RECT *pRect = (RECT *)lparam;
+    int width = pRect->right - pRect->left;
+    int height = pRect->bottom - pRect->top;
+    int snapThreshold = 20;      // Snapping distance in pixels
+    int velocityThreshold = 500; // Speed threshold for snapping (pixels/sec)
+
+    // Get current time
+    std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
+    double duration = std::chrono::duration<double, std::milli>(currentTime - lastTime).count();
+
+    // Get current mouse position
+    POINT currentPos;
+    GetCursorPos(&currentPos);
+
+    // Calculate velocity (distance moved / time taken)
+    int deltaX = currentPos.x - lastPos.x;
+    int deltaY = currentPos.y - lastPos.y;
+    double distance = sqrt(deltaX * deltaX + deltaY * deltaY);
+    double velocity = (distance / duration) * 1000; // Convert to pixels per second
+
+    // Update last position and time
+    lastPos = currentPos;
+    lastTime = currentTime;
+
+    // Check if velocity is slow enough for snapping
+    if (velocity < velocityThreshold)
+    {
+      MultiWindowManager *manager = MultiWindowManager::Instance();
+
+      if (manager)
+      {
+        int snappedX = pRect->left; // New X position after snapping
+        int snappedY = pRect->top;  // New Y position after snapping
+
+        for (auto &w : manager->windows_)
+        {
+          if (w.second->GetWindowHandle() == hwnd)
+            continue; // Skip itself
+
+          HWND otherHwnd = w.second->GetWindowHandle();
+          RECT otherRect;
+          GetWindowRect(otherHwnd, &otherRect);
+
+          // Check horizontal snapping (align left, right, or center)
+          if (abs(pRect->left - otherRect.right) < snapThreshold)
+          {
+            snappedX = otherRect.right - 10;
+          }
+          if (abs(pRect->right - otherRect.left) < snapThreshold)
+          {
+            snappedX = otherRect.left - width + 10;
+          }
+          // if (abs((pRect->left + pRect->right) / 2 - (otherRect.left + otherRect.right) / 2) < snapThreshold)
+          // {
+          //   snappedX = (otherRect.left + otherRect.right) / 2 - width / 2;
+          // }
+
+          // Check vertical snapping (align top, bottom, or middle)
+          if (abs(pRect->top - otherRect.bottom) < snapThreshold)
+          {
+            snappedY = otherRect.bottom;
+          }
+          if (abs(pRect->bottom - otherRect.top) < snapThreshold)
+          {
+            snappedY = otherRect.top - height;
+          }
+          // if (abs((pRect->top + pRect->bottom) / 2 - (otherRect.top + otherRect.bottom) / 2) < snapThreshold)
+          // {
+          //   snappedY = (otherRect.top + otherRect.bottom) / 2 - height / 2;
+          // }
+        }
+
+        // Apply the final snapped position if needed
+        pRect->left = snappedX;
+        pRect->right = snappedX + width;
+        pRect->top = snappedY;
+        pRect->bottom = snappedY + height;
+      }
     }
+
+    break; 
+  }
     case WM_NCACTIVATE: {
         char* eventName;
         if (wparam == TRUE) {
