@@ -348,3 +348,35 @@ void MultiWindowManager::SetSkipTaskbar(int64_t id, const flutter::EncodableMap 
     return window->second->SetSkipTaskbar(args);
   }
 }
+
+// Convert window positions into a Flutter-compatible map
+flutter::EncodableMap MultiWindowManager::GetAllWindowsPositionAsMap()
+{
+  flutter::EncodableMap result;
+  for (const auto &w : windows_)
+  {
+    HWND hwnd = w.second->GetWindowHandle();
+
+    // Ignore windows with title "Toast" || "Dialog"
+    wchar_t title[256];
+    GetWindowText(hwnd, title, 256);
+    std::wstring titleW(title);
+
+    // Ignore the main window and any hidden windows and windows that title is "Toast"
+    if (w.first == 0 || !IsWindowVisible(hwnd) || titleW == L"Toast" || titleW == L"Dialog")
+    {
+      continue;
+    }
+    RECT rect;
+    if (GetWindowRect(hwnd, &rect))
+    {
+      flutter::EncodableMap windowInfo;
+      windowInfo[flutter::EncodableValue("left")] = flutter::EncodableValue(rect.left);
+      windowInfo[flutter::EncodableValue("top")] = flutter::EncodableValue(rect.top);
+      windowInfo[flutter::EncodableValue("right")] = flutter::EncodableValue(rect.right);
+      windowInfo[flutter::EncodableValue("bottom")] = flutter::EncodableValue(rect.bottom);
+      result[flutter::EncodableValue((int64_t)w.first)] = flutter::EncodableValue(windowInfo);
+    }
+  }
+  return result;
+}

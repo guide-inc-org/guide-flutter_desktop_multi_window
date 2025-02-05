@@ -12,14 +12,19 @@
 #include "base_flutter_window.h"
 #include "flutter_window.h"
 
-class MultiWindowManager : public std::enable_shared_from_this<MultiWindowManager>, public FlutterWindowCallback {
+class MultiWindowManager : public std::enable_shared_from_this<MultiWindowManager>, public FlutterWindowCallback
+{
 
- public:
+public:
   static MultiWindowManager *Instance();
 
   MultiWindowManager();
 
   int64_t Create(std::string args);
+
+  std::map<int64_t, std::unique_ptr<BaseFlutterWindow>> windows_; // Accessible from anywhere
+
+  flutter::EncodableMap GetAllWindowsPositionAsMap(); // Method for Flutter
 
   void AttachFlutterMainWindow(HWND main_window_handle, std::unique_ptr<WindowChannel> window_channel);
 
@@ -92,17 +97,12 @@ class MultiWindowManager : public std::enable_shared_from_this<MultiWindowManage
   void StartResizing(int64_t id, const flutter::EncodableMap *params);
 
 private:
-
-  std::map<int64_t, std::unique_ptr<BaseFlutterWindow>> windows_;
-
   void HandleWindowChannelCall(
       int64_t from_window_id,
       int64_t target_window_id,
       const std::string &call,
       flutter::EncodableValue *arguments,
-      std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result
-  );
-
+      std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
 };
 
-#endif //DESKTOP_MULTI_WINDOW_WINDOWS_MULTI_WINDOW_MANAGER_H_
+#endif // DESKTOP_MULTI_WINDOW_WINDOWS_MULTI_WINDOW_MANAGER_H_
