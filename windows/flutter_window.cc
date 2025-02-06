@@ -200,13 +200,13 @@ bool IsWindowCovered(HWND hwnd)
 
   // Check key points: Top-left and center
   POINT topLeft = {rect.left + 5, rect.top + 5};
-  POINT center = {rect.left + (rect.right - rect.left) / 2, rect.top + (rect.bottom - rect.top) / 2};
+  POINT bottomRight = {rect.right - 5, rect.bottom - 5};
 
   HWND topLeftWindow = WindowFromPoint(topLeft);
-  HWND centerWindow = WindowFromPoint(center);
+  HWND bottomRightWindow = WindowFromPoint(bottomRight);
 
   // If both key points do not belong to our window, it's covered
-  return (topLeftWindow != hwnd && centerWindow != hwnd);
+  return (topLeftWindow != hwnd && bottomRightWindow != hwnd);
 }
 
 LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
@@ -432,7 +432,7 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
     int width = pRect->right - pRect->left;
     int height = pRect->bottom - pRect->top;
     int snapThreshold = 20;      // Snapping distance in pixels
-    int velocityThreshold = 500; // Speed threshold for snapping (pixels/sec)
+    int velocityThreshold = 30; // Speed threshold for snapping (pixels/sec)
 
     // Get current time
     std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
