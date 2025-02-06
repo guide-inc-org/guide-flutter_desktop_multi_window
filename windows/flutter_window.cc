@@ -190,6 +190,25 @@ LRESULT CALLBACK FlutterWindow::WndProc(HWND window, UINT message, WPARAM wparam
   return DefWindowProc(window, message, wparam, lparam);
 }
 
+bool IsWindowCovered(HWND hwnd)
+{
+  RECT rect;
+  if (!GetWindowRect(hwnd, &rect))
+  {
+    return true; // Assume covered if we can't get the rect
+  }
+
+  // Check key points: Top-left and center
+  POINT topLeft = {rect.left + 5, rect.top + 5};
+  POINT center = {rect.left + (rect.right - rect.left) / 2, rect.top + (rect.bottom - rect.top) / 2};
+
+  HWND topLeftWindow = WindowFromPoint(topLeft);
+  HWND centerWindow = WindowFromPoint(center);
+
+  // If both key points do not belong to our window, it's covered
+  return (topLeftWindow != hwnd && centerWindow != hwnd);
+}
+
 LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
   static POINT lastPos = {0, 0};                       // Store last mouse position
   static auto lastTime = high_resolution_clock::now(); // Store last timestamp
@@ -450,7 +469,7 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
           wchar_t title[256];
           GetWindowText(otherHwnd, title, 256);
           std::wstring titleW(title);
-          if (otherHwnd == hwnd || titleW == L"Toast" || titleW == L"Dialog" || !IsWindowVisible(otherHwnd))
+          if (otherHwnd == hwnd || titleW == L"Toast" || titleW == L"Dialog" || !IsWindowVisible(otherHwnd) || IsWindowCovered(otherHwnd))
           {
             continue; // Skip itself
           }
