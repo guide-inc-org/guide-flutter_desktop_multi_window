@@ -249,6 +249,9 @@ void DesktopMultiWindowPlugin::HandleMethodCall(
     auto window_id = arguments->at(flutter::EncodableValue("windowId")).LongValue();
     MultiWindowManager::Instance()->SetSkipTaskbar(window_id, arguments);
     result->Success();
+  } else if (method_call.method_name() == "getAllWindowsPosition") {
+    auto positions = MultiWindowManager::Instance()->GetAllWindowsPositionAsMap();
+    result->Success(flutter::EncodableValue(positions));
   }
   result->NotImplemented();
 }
