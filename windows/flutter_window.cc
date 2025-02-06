@@ -445,10 +445,16 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
 
         for (auto &w : manager->windows_)
         {
-          if (w.second->GetWindowHandle() == hwnd)
-            continue; // Skip itself
-
           HWND otherHwnd = w.second->GetWindowHandle();
+          // Ignore window "Toast" and "Dialog"
+          wchar_t title[256];
+          GetWindowText(otherHwnd, title, 256);
+          std::wstring titleW(title);
+          if (otherHwnd == hwnd || titleW == L"Toast" || titleW == L"Dialog" || !IsWindowVisible(otherHwnd))
+          {
+            continue; // Skip itself
+          }
+
           RECT otherRect;
           GetWindowRect(otherHwnd, &otherRect);
 
