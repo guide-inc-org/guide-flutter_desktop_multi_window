@@ -188,12 +188,15 @@ LRESULT CALLBACK FlutterWindow::WndProc(HWND window, UINT message, WPARAM wparam
   return DefWindowProc(window, message, wparam, lparam);
 }
 
-bool IsWindowCovered(HWND hwnd)
-{
+RECT lastRect = {0, 0, 0, 0};
+POINT lastPoint = {0, 0};
+int deltaX = 0;
+int deltaY = 0;
+
+bool IsWindowCovered(HWND hwnd) {
   RECT rect;
-  if (!GetWindowRect(hwnd, &rect))
-  {
-    return true; // Assume covered if we can't get the rect
+  if (!GetWindowRect(hwnd, &rect)) {
+    return true;  // Assume covered if we can't get the rect
   }
 
   // Check key points: Top-left and center
@@ -411,6 +414,10 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
 
     case WM_MOVE:
       EmitEvent("moved");
+      lastRect = {0, 0, 0, 0};
+      lastPoint = {0, 0};
+      deltaX = 0;
+      deltaY = 0;
       break;
 
     case WM_ACTIVATE: {
@@ -445,19 +452,68 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
       EmitEvent("resize");
       break;
     }
+    case WM_WINDOWPOSCHANGED: {
+      lastRect = {0, 0, 0, 0};
+      lastPoint = {0, 0};
+      deltaX = 0;
+      deltaY = 0;
+      break;
+    }
 
     case WM_MOVING: {
-      EmitEvent("move");
       // Handle Snapping windows
       RECT *rect = (RECT *)lparam;
+
+      // Get delta of the cursor position
+      if (lastPoint.x == 0 && lastPoint.y == 0) {
+        GetCursorPos(&lastPoint);
+      }
+      POINT currentPoint;
+      GetCursorPos(&currentPoint);
+      deltaX += currentPoint.x - lastPoint.x;
+      deltaY += currentPoint.y - lastPoint.y;
+      lastPoint = currentPoint;
+
+      // Clone the rect to avoid changing the original rect
+      RECT cloneRect = *rect;
+
+      // Snap threshold
       int snapThreshold = int(round(10 * pixel_ratio_));
+
+      // Margin for snapping
       int margin_vertical = int(round(4 / pixel_ratio_));
       int margin_horizontal = int(floor(12 / pixel_ratio_));
-      int snappedX = rect->left;
-      int snappedY = rect->top;
 
-      int width = rect->right - rect->left;
-      int height = rect->bottom - rect->top;
+      // Snapped position
+      int snappedX = cloneRect.left;
+      int snappedY = cloneRect.top;
+
+      // Width and height of the window
+      int width = cloneRect.right - cloneRect.left;
+      int height = cloneRect.bottom - cloneRect.top;
+
+      // Check if the window is snapped
+      bool isSnapped = false;
+
+      // Sometimes the delta is wrong, so we need to check if the delta is
+      // larger than the threshold
+      if (abs(deltaX) > snapThreshold * 2 ||
+          abs(deltaY) > snapThreshold * 2) {
+        break;
+      }
+
+      // Check if window is snapped to another window
+      // When snapping , the window will not change its position if the
+      // difference between the last position and the current position is less
+      // than 2 pixels
+      if (abs(lastRect.left - cloneRect.left) < 5 &&
+          abs(lastRect.top - cloneRect.top) < 5) {
+        cloneRect.left = lastRect.left + deltaX;
+        cloneRect.top = lastRect.top + deltaY;
+        cloneRect.right = cloneRect.left + width;
+        cloneRect.bottom = cloneRect.top + height;
+      }
+
       MultiWindowManager *manager = MultiWindowManager::Instance();
 
       if (manager) {
@@ -474,54 +530,77 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
           RECT otherRect;
           GetWindowRect(otherHwnd, &otherRect);
           bool isMenu = titleW == L"FLUTTERVIEW";
-          // Check horizontal snapping (align left, right, or center)
-          if (abs(rect->left - otherRect.right) < snapThreshold &&
-              (rect->top <= otherRect.bottom) &&
-              (rect->bottom >= otherRect.top)) {
+          // Check horizontal snapping (align left, right)
+          if (abs(cloneRect.left - otherRect.right) < snapThreshold &&
+              (cloneRect.top <= otherRect.bottom) &&
+              (cloneRect.bottom >= otherRect.top)) {
+            // Menu size is different from other windows so we need to adjust
+            // the margin
             if (isMenu) {
-              margin_horizontal -= int(round((8 / pixel_ratio_)));
+              margin_horizontal -= int(round((5 / pixel_ratio_)));
             }
+
+            // Snapped to the right
+            isSnapped = true;
             snappedX = otherRect.right - min(margin_horizontal, snapThreshold);
           }
-          if (abs(rect->right - otherRect.left) < snapThreshold &&
-              (rect->top <= otherRect.bottom) &&
-              (rect->bottom >= otherRect.top)) {
+          if (abs(cloneRect.right - otherRect.left) < snapThreshold &&
+              (cloneRect.top <= otherRect.bottom) &&
+              (cloneRect.bottom >= otherRect.top)) {
+            // Menu size is different from other windows so we need to adjust
+            // the margin
             if (isMenu) {
-              margin_horizontal -= int(round((8 / pixel_ratio_)));
+              margin_horizontal -= int(round((10 / pixel_ratio_)));
             }
+            // Snapped to the left
+            isSnapped = true;
             snappedX =
                 otherRect.left - width + min(margin_horizontal, snapThreshold);
             ;
           }
 
           // Check vertical snapping (align top, bottom, or middle)
-          if (abs(rect->top - otherRect.bottom) < snapThreshold &&
-              (rect->left <= otherRect.right) &&
-              (rect->right >= otherRect.left)) {
+          if (abs(cloneRect.top - otherRect.bottom) < snapThreshold &&
+              (cloneRect.left <= otherRect.right) &&
+              (cloneRect.right >= otherRect.left)) {
+            // Maximized menu has a different margin
             if (isMenu) {
-              bool isMaximized = IsMaximizedCheck(otherHwnd);
-              if (isMaximized) {
-                margin_vertical += int(round((14 / pixel_ratio_)));
-              } else {
-                margin_vertical += int(round(3 / pixel_ratio_));
-              }
+              margin_vertical -= int(round((10 / pixel_ratio_)));
             }
+            // Snapped to the bottom
+            isSnapped = true;
             snappedY = otherRect.bottom - min(margin_vertical, snapThreshold);
           }
-          if (abs(rect->bottom - otherRect.top) < snapThreshold &&
-              (rect->left <= otherRect.right) &&
-              (rect->right >= otherRect.left)) {
+          if (abs(cloneRect.bottom - otherRect.top) < snapThreshold &&
+              (cloneRect.left <= otherRect.right) &&
+              (cloneRect.right >= otherRect.left)) {
+            // Snapped to the top
+            isSnapped = true;
             snappedY =
                 otherRect.top - height + min(margin_vertical, snapThreshold);
           }
         }
 
         // Translate the window to the snapped position
-        if (snappedX != rect->left || snappedY != rect->top) {
+        if (isSnapped) {
           rect->left = snappedX;
           rect->top = snappedY;
           rect->right = rect->left + width;
           rect->bottom = rect->top + height;
+
+          if (lastRect.left == 0 && lastRect.top == 0) {
+            lastRect = *rect;
+          }
+        } else {
+          // Out of snapping range, set cloneRect to the current position
+          rect->left = cloneRect.left;
+          rect->top = cloneRect.top;
+          rect->right = cloneRect.right;
+          rect->bottom = cloneRect.bottom;
+          lastRect = {0, 0, 0, 0};
+          lastPoint = {0, 0};
+          deltaX = 0;
+          deltaY = 0;
         }
       }
       break;
