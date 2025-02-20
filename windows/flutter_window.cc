@@ -422,89 +422,12 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
     case WM_WINDOWPOSCHANGING: {
       WINDOWPOS *pPos = (WINDOWPOS *)lparam;
 
-      double snapThreshold = 20;    // Distance threshold for snapping (pixels)
-
-    
-      double ratio = (14 * (4 - pixel_ratio_)) / 3;
-      double vertical_ratio = (5 * (4 - pixel_ratio_)) / 3;
-  
-      int margin = pixel_ratio_ == 1.5 ? 11 : int(round(ratio));
-      int margin_vertical = pixel_ratio_ == 1.5 ? 5 : int(round(vertical_ratio));
-  
-      // Check if velocity is slow enough for snapping
-    
-        MultiWindowManager *manager = MultiWindowManager::Instance();
-
-      if (manager)
-      {
-        int snappedX = pPos->x; // New X position after snapping
-        int snappedY = pPos->y; // New Y position after snapping
-
-        for (auto &w : manager->windows_)
-        {
-          HWND otherHwnd = w.second->GetWindowHandle();
-          // Ignore window "Toast" and "Dialog"
-          wchar_t title[256];
-          GetWindowText(otherHwnd, title, 256);
-          std::wstring titleW(title);
-          if (otherHwnd == hwnd || titleW == L"Toast" || titleW == L"Dialog" || !IsWindowVisible(otherHwnd) || IsWindowCovered(otherHwnd))
-          {
-            continue; // Skip itself
-          }
-          RECT otherRect;
-          GetWindowRect(otherHwnd, &otherRect);
-
-          // Check horizontal snapping (align left, right, or center)
-          if (abs(pPos->x - otherRect.right) < snapThreshold)
-          {
-            snappedX = otherRect.right - margin;
-          }
-          if (abs(pPos->x + pPos->cx - otherRect.left) < snapThreshold)
-          {
-            snappedX = otherRect.left - pPos->cx + margin;
-          }
-
-          // Check vertical snapping (align top, bottom, or middle)
-          if (abs(pPos->y - otherRect.bottom) < snapThreshold)
-          {
-            // Check if the window is a menu
-            // This is a workaround for the issue where the menu is not snapped correctly
-            bool isMenu = titleW == L"FLUTTERVIEW";
-
-            if (isMenu)
-            {
-              bool isMaximized = IsMaximizedCheck(otherHwnd);
-              if (isMaximized)
-              {
-                margin_vertical += int(round((otherRect.bottom % 2 == 0 ? 9 : 11) * pixel_ratio_));
-              }
-              else
-              {
-                margin_vertical += int(round(((otherRect.bottom - otherRect.top) % 2 == 0 ? 2 : 4) * pixel_ratio_));
-              }
-            }
-            snappedY = otherRect.bottom - margin_vertical;
-          }
-          if (abs(pPos->y + pPos->cy - otherRect.top) < snapThreshold)
-          {
-            snappedY = otherRect.top - pPos->cy + margin_vertical;
-          }
-        }
-
-        // Update position if snapping occurred
-        pPos->x = snappedX;
-        pPos->y = snappedY;
-      }
-        
-
       // Check if velocity is slow enough for snapping
 
-      if (is_prevent_focus_)
-      {
-
-        // Check if the window is being brought to the top (SWP_NOZORDER is NOT set)
-        if (!(pPos->flags & SWP_NOZORDER))
-        {
+      if (is_prevent_focus_) {
+        // Check if the window is being brought to the top (SWP_NOZORDER is NOT
+        // set)
+        if (!(pPos->flags & SWP_NOZORDER)) {
           // Prevent the window from being brought to the top
           pPos->flags |= SWP_NOZORDER;
         }
@@ -512,21 +435,96 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
       break;
     }
     case WM_SYSCOMMAND: {
-        // Check if the command is for minimizing the window
-        if (is_prevent_focus_ && (wparam & 0xFFF0) == SC_MINIMIZE) {
-            // Prevent the window from minimizing
-            return 0;
-        }
+      // Check if the command is for minimizing the window
+      if (is_prevent_focus_ && (wparam & 0xFFF0) == SC_MINIMIZE) {
+        // Prevent the window from minimizing
+        return 0;
+      }
     }
     case WM_SIZING: {
-        EmitEvent("resize");
-        break;
+      EmitEvent("resize");
+      break;
     }
 
-    case WM_MOVING:
-    {
-        EmitEvent("move");
-        break; 
+    case WM_MOVING: {
+      EmitEvent("move");
+      // Handle Snapping windows
+      RECT *rect = (RECT *)lparam;
+      int snapThreshold = int(round(10 * pixel_ratio_));
+      int margin_vertical = int(round(4 / pixel_ratio_));
+      int margin_horizontal = int(floor(12 / pixel_ratio_));
+      int snappedX = rect->left;
+      int snappedY = rect->top;
+
+      int width = rect->right - rect->left;
+      int height = rect->bottom - rect->top;
+      MultiWindowManager *manager = MultiWindowManager::Instance();
+
+      if (manager) {
+        for (auto &w : manager->windows_) {
+          HWND otherHwnd = w.second->GetWindowHandle();
+          // Ignore window "Toast" and "Dialog"
+          wchar_t title[256];
+          GetWindowText(otherHwnd, title, 256);
+          std::wstring titleW(title);
+          if (otherHwnd == hwnd || titleW == L"Toast" || titleW == L"Dialog" ||
+              !IsWindowVisible(otherHwnd) || IsWindowCovered(otherHwnd)) {
+            continue;  // Skip itself
+          }
+          RECT otherRect;
+          GetWindowRect(otherHwnd, &otherRect);
+          bool isMenu = titleW == L"FLUTTERVIEW";
+          // Check horizontal snapping (align left, right, or center)
+          if (abs(rect->left - otherRect.right) < snapThreshold &&
+              (rect->top <= otherRect.bottom) &&
+              (rect->bottom >= otherRect.top)) {
+            if (isMenu) {
+              margin_horizontal -= int(round((8 / pixel_ratio_)));
+            }
+            snappedX = otherRect.right - min(margin_horizontal, snapThreshold);
+          }
+          if (abs(rect->right - otherRect.left) < snapThreshold &&
+              (rect->top <= otherRect.bottom) &&
+              (rect->bottom >= otherRect.top)) {
+            if (isMenu) {
+              margin_horizontal -= int(round((8 / pixel_ratio_)));
+            }
+            snappedX =
+                otherRect.left - width + min(margin_horizontal, snapThreshold);
+            ;
+          }
+
+          // Check vertical snapping (align top, bottom, or middle)
+          if (abs(rect->top - otherRect.bottom) < snapThreshold &&
+              (rect->left <= otherRect.right) &&
+              (rect->right >= otherRect.left)) {
+            if (isMenu) {
+              bool isMaximized = IsMaximizedCheck(otherHwnd);
+              if (isMaximized) {
+                margin_vertical += int(round((14 / pixel_ratio_)));
+              } else {
+                margin_vertical += int(round(3 / pixel_ratio_));
+              }
+            }
+            snappedY = otherRect.bottom - min(margin_vertical, snapThreshold);
+          }
+          if (abs(rect->bottom - otherRect.top) < snapThreshold &&
+              (rect->left <= otherRect.right) &&
+              (rect->right >= otherRect.left)) {
+            snappedY =
+                otherRect.top - height + min(margin_vertical, snapThreshold);
+          }
+        }
+
+        // Translate the window to the snapped position
+        if (snappedX != rect->left || snappedY != rect->top) {
+          rect->left = snappedX;
+          rect->top = snappedY;
+          rect->right = rect->left + width;
+          rect->bottom = rect->top + height;
+        }
+      }
+      break;
     }
     case WM_NCACTIVATE: {
         char* eventName;
