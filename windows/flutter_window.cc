@@ -1,21 +1,20 @@
 //
 // Created by yangbin on 2022/1/11.
 //
-#include <windows.h>
-#include <cmath> // For sqrt
 #include "flutter_window.h"
-#include "multi_window_manager.h"
-#include "flutter_windows.h"
 
-#include "tchar.h"
+#include <windows.h>
 
-#include "resource.h"
-
+#include <cmath>  // For sqrt
 #include <iostream>
 #include <utility>
 
+#include "flutter_windows.h"
 #include "include/desktop_multi_window/desktop_multi_window_plugin.h"
+#include "multi_window_manager.h"
 #include "multi_window_plugin_internal.h"
+#include "resource.h"
+#include "tchar.h"
 
 /// RustDesk deps using method channel
 // #include <bitsdojo_window_windows/bitsdojo_window_plugin.h>
@@ -26,19 +25,20 @@
 // #include <screen_retriever/screen_retriever_plugin.h>
 // #include <tray_manager/tray_manager_plugin.h>
 
-void RustDeskRegisterPlugins(flutter::PluginRegistry* registry) {
-    // BitsdojoWindowPluginRegisterWithRegistrar(
-    //    registry->GetRegistrarForPlugin("BitsdojoWindowPlugin"));
-    UrlLauncherWindowsRegisterWithRegistrar(
-        registry->GetRegistrarForPlugin("UrlLauncherWindows"));
-    // WindowSizePluginRegisterWithRegistrar(registry->GetRegistrarForPlugin("WindowSizePlugin"));
-    TextureRgbaRendererPluginCApiRegisterWithRegistrar(registry->GetRegistrarForPlugin("TextureRgbaRendererPlugin"));
-    // WindowManagerPluginRegisterWithRegistrar(
-    //     registry->GetRegistrarForPlugin("WindowManagerPlugin"));
-    // ScreenRetrieverPluginRegisterWithRegistrar(
-    //   registry->GetRegistrarForPlugin("ScreenRetrieverPlugin"));
-    // TrayManagerPluginRegisterWithRegistrar(
-    //  registry->GetRegistrarForPlugin("TrayManagerPlugin"));
+void RustDeskRegisterPlugins(flutter::PluginRegistry *registry) {
+  // BitsdojoWindowPluginRegisterWithRegistrar(
+  //    registry->GetRegistrarForPlugin("BitsdojoWindowPlugin"));
+  UrlLauncherWindowsRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("UrlLauncherWindows"));
+  // WindowSizePluginRegisterWithRegistrar(registry->GetRegistrarForPlugin("WindowSizePlugin"));
+  TextureRgbaRendererPluginCApiRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("TextureRgbaRendererPlugin"));
+  // WindowManagerPluginRegisterWithRegistrar(
+  //     registry->GetRegistrarForPlugin("WindowManagerPlugin"));
+  // ScreenRetrieverPluginRegisterWithRegistrar(
+  //   registry->GetRegistrarForPlugin("ScreenRetrieverPlugin"));
+  // TrayManagerPluginRegisterWithRegistrar(
+  //  registry->GetRegistrarForPlugin("TrayManagerPlugin"));
 }
 
 bool IsWindows11OrGreater() {
@@ -49,8 +49,7 @@ bool IsWindows11OrGreater() {
 #pragma warning(disable : 4996)
   dwVersion = GetVersion();
   // Get the build number.
-  if (dwVersion < 0x80000000)
-    dwBuild = (DWORD)(HIWORD(dwVersion));
+  if (dwVersion < 0x80000000) dwBuild = (DWORD)(HIWORD(dwVersion));
 #pragma warning(pop)
 
   return dwBuild < 22000;
@@ -115,33 +114,32 @@ void EnableFullDpiSupportIfAvailable(HWND hwnd) {
   }
 }
 
-}
+}  // namespace
 
 FlutterWindow::FlutterWindow(
-    HWND parent,
-    int64_t id,
-    std::string args,
-    const std::shared_ptr<FlutterWindowCallback> &callback
-) : callback_(callback), id_(id), window_handle_(nullptr), scale_factor_(1) {
+    HWND parent, int64_t id, std::string args,
+    const std::shared_ptr<FlutterWindowCallback> &callback)
+    : callback_(callback), id_(id), window_handle_(nullptr), scale_factor_(1) {
   RegisterWindowClass(FlutterWindow::WndProc);
 
-  const POINT target_point = {static_cast<LONG>(10),
-                              static_cast<LONG>(10)};
+  const POINT target_point = {static_cast<LONG>(10), static_cast<LONG>(10)};
   HMONITOR monitor = MonitorFromPoint(target_point, MONITOR_DEFAULTTONEAREST);
   UINT dpi = FlutterDesktopGetDpiForMonitor(monitor);
   scale_factor_ = dpi / 96.0;
   this->pixel_ratio_ = scale_factor_;
 
-  HWND window_handle = CreateWindow(
-      kFlutterWindowClassName, L"", WS_OVERLAPPEDWINDOW,
-      Scale(target_point.x, scale_factor_), Scale(target_point.y, scale_factor_),
-      Scale(1280, scale_factor_), Scale(720, scale_factor_),
-      nullptr, nullptr, GetModuleHandle(nullptr), this);
+  HWND window_handle =
+      CreateWindow(kFlutterWindowClassName, L"", WS_OVERLAPPEDWINDOW,
+                   Scale(target_point.x, scale_factor_),
+                   Scale(target_point.y, scale_factor_),
+                   Scale(1280, scale_factor_), Scale(720, scale_factor_),
+                   nullptr, nullptr, GetModuleHandle(nullptr), this);
 
   RECT frame;
   GetClientRect(window_handle, &frame);
   flutter::DartProject project(L"data");
-  project.set_dart_entrypoint_arguments({"multi_window", std::to_string(id), std::move(args)});
+  project.set_dart_entrypoint_arguments(
+      {"multi_window", std::to_string(id), std::move(args)});
   flutter_controller_ = std::make_unique<flutter::FlutterViewController>(
       frame.right - frame.left, frame.bottom - frame.top, project);
   // Ensure that basic setup of the controller was successful.
@@ -150,13 +148,17 @@ FlutterWindow::FlutterWindow(
   }
   auto view_handle = flutter_controller_->view()->GetNativeWindow();
   SetParent(view_handle, window_handle);
-  MoveWindow(view_handle, 0, 0, frame.right - frame.left, frame.bottom - frame.top, true);
+  MoveWindow(view_handle, 0, 0, frame.right - frame.left,
+             frame.bottom - frame.top, true);
 
   RustDeskRegisterPlugins(flutter_controller_->engine());
   InternalMultiWindowPluginRegisterWithRegistrar(
-      flutter_controller_->engine()->GetRegistrarForPlugin("DesktopMultiWindowPlugin"));
+      flutter_controller_->engine()->GetRegistrarForPlugin(
+          "DesktopMultiWindowPlugin"));
   window_channel_ = WindowChannel::RegisterWithRegistrar(
-      flutter_controller_->engine()->GetRegistrarForPlugin("DesktopMultiWindowPlugin"), id_);
+      flutter_controller_->engine()->GetRegistrarForPlugin(
+          "DesktopMultiWindowPlugin"),
+      id_);
 
   if (_g_window_created_callback) {
     _g_window_created_callback(flutter_controller_.get());
@@ -173,10 +175,12 @@ FlutterWindow *FlutterWindow::GetThisFromHandle(HWND window) noexcept {
 }
 
 // static
-LRESULT CALLBACK FlutterWindow::WndProc(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+LRESULT CALLBACK FlutterWindow::WndProc(HWND window, UINT message,
+                                        WPARAM wparam, LPARAM lparam) {
   if (message == WM_NCCREATE) {
     auto window_struct = reinterpret_cast<CREATESTRUCT *>(lparam);
-    SetWindowLongPtr(window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(window_struct->lpCreateParams));
+    SetWindowLongPtr(window, GWLP_USERDATA,
+                     reinterpret_cast<LONG_PTR>(window_struct->lpCreateParams));
 
     auto that = static_cast<FlutterWindow *>(window_struct->lpCreateParams);
     EnableFullDpiSupportIfAvailable(window);
@@ -192,7 +196,6 @@ RECT lastRect = {0, 0, 0, 0};
 POINT lastPoint = {0, 0};
 int deltaX = 0;
 int deltaY = 0;
-
 
 bool IsWindowCovered(HWND hwnd) {
   RECT rect;
@@ -211,22 +214,18 @@ bool IsWindowCovered(HWND hwnd) {
   return (topLeftWindow != hwnd && bottomRightWindow != hwnd);
 }
 
-bool IsMaximizedCheck(HWND hwnd)
-{
+bool IsMaximizedCheck(HWND hwnd) {
   RECT windowRect;
-  if (GetWindowRect(hwnd, &windowRect))
-  {
+  if (GetWindowRect(hwnd, &windowRect)) {
     HMONITOR hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
     MONITORINFO mi = {0};
     mi.cbSize = sizeof(mi);
-    if (GetMonitorInfo(hMonitor, &mi))
-    {
+    if (GetMonitorInfo(hMonitor, &mi)) {
       RECT workRect = mi.rcWork;
       // Optionally allow for a tolerance if needed:
-      const int TOLERANCE = 2; // pixels
+      const int TOLERANCE = 2;  // pixels
       if (abs(windowRect.left - workRect.left) <= TOLERANCE &&
-          abs(windowRect.top - workRect.top) <= TOLERANCE)
-      {
+          abs(windowRect.top - workRect.top) <= TOLERANCE) {
         return true;
       }
     }
@@ -234,65 +233,69 @@ bool IsMaximizedCheck(HWND hwnd)
   return false;
 }
 
-LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
+LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam,
+                                      LPARAM lparam) {
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
-    std::optional<LRESULT> result = flutter_controller_->HandleTopLevelWindowProc(hwnd, message, wparam, lparam);
+    std::optional<LRESULT> result =
+        flutter_controller_->HandleTopLevelWindowProc(hwnd, message, wparam,
+                                                      lparam);
     if (result) {
       return *result;
     }
   }
 
-  auto child_content_ = flutter_controller_ ? flutter_controller_->view()->GetNativeWindow() : nullptr;
+  auto child_content_ = flutter_controller_
+                            ? flutter_controller_->view()->GetNativeWindow()
+                            : nullptr;
 
   switch (message) {
     case WM_NCCALCSIZE: {
-        // This must always be first or else the one of other two ifs will execute
-        //  when window is in full screen and we don't want that
-        if (wparam && IsFullscreen()) {
-            // Note:
-            // I dont know why we should -3 on the bottom. 
-            //
-            // NCCALCSIZE_PARAMS* sz = reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam);
-            // sz->rgrc[0].bottom -= 3;
-            return 0;
+      // This must always be first or else the one of other two ifs will execute
+      //  when window is in full screen and we don't want that
+      if (wparam && IsFullscreen()) {
+        // Note:
+        // I dont know why we should -3 on the bottom.
+        //
+        // NCCALCSIZE_PARAMS* sz = reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam);
+        // sz->rgrc[0].bottom -= 3;
+        return 0;
+      }
+      // This must always be before handling title_bar_style_ == "hidden" so
+      //  the if TitleBarStyle.hidden doesn't get executed.
+      if (wparam && IsFrameless()) {
+        // Add borders when maximized so app doesn't get cut off.
+        if (IsMaximized()) {
+          adjustNCCALCSIZE(hwnd, reinterpret_cast<NCCALCSIZE_PARAMS *>(lparam));
         }
-        // This must always be before handling title_bar_style_ == "hidden" so
-        //  the if TitleBarStyle.hidden doesn't get executed.
-        if (wparam && IsFrameless()) {
-            // Add borders when maximized so app doesn't get cut off.
-            if (IsMaximized()) {
-                adjustNCCALCSIZE(hwnd, reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam));
-            }
-            // This cuts the app at the bottom by one pixel but that's necessary to
-            // prevent jitter when resizing the app
-            NCCALCSIZE_PARAMS* sz = reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam);
-            sz->rgrc[0].bottom += 1;
-            return 0;
+        // This cuts the app at the bottom by one pixel but that's necessary to
+        // prevent jitter when resizing the app
+        NCCALCSIZE_PARAMS *sz = reinterpret_cast<NCCALCSIZE_PARAMS *>(lparam);
+        sz->rgrc[0].bottom += 1;
+        return 0;
+      }
+      if (wparam && this->title_bar_style_ == "hidden") {
+        // Add 8 pixel to the top border when maximized so the app isn't cut off
+        if (this->IsMaximized()) {
+          adjustNCCALCSIZE(hwnd, reinterpret_cast<NCCALCSIZE_PARAMS *>(lparam));
+        } else {
+          NCCALCSIZE_PARAMS *sz = reinterpret_cast<NCCALCSIZE_PARAMS *>(lparam);
+          // on windows 10, if set to 0, there's a white line at the top
+          // of the app and I've yet to find a way to remove that.
+          sz->rgrc[0].top += IsWindows11OrGreater() ? 0 : 1;
+          // We need the following code to resize the window.
+          // https://github.com/rustdesk/rustdesk/discussions/9061
+          sz->rgrc[0].right -= 8;
+          sz->rgrc[0].bottom -= 8;
+          sz->rgrc[0].left -= -8;
         }
-        if (wparam && this->title_bar_style_ == "hidden") {
-            // Add 8 pixel to the top border when maximized so the app isn't cut off
-            if (this->IsMaximized()) {
-                adjustNCCALCSIZE(hwnd, reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam));
-            }
-            else {
-                NCCALCSIZE_PARAMS* sz = reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam);
-                // on windows 10, if set to 0, there's a white line at the top
-                // of the app and I've yet to find a way to remove that.
-                sz->rgrc[0].top += IsWindows11OrGreater() ? 0 : 1;
-                // We need the following code to resize the window.
-                // https://github.com/rustdesk/rustdesk/discussions/9061
-                sz->rgrc[0].right -= 8;
-                sz->rgrc[0].bottom -= 8;
-                sz->rgrc[0].left -= -8;
-            }
 
-            // Previously (WVR_HREDRAW | WVR_VREDRAW), but returning 0 or 1 doesn't
-            // actually break anything so I've set it to 0. Unless someone pointed a
-            // problem in the future.
-            return 0;
-        }
-        break;
+        // Previously (WVR_HREDRAW | WVR_VREDRAW), but returning 0 or 1 doesn't
+        // actually break anything so I've set it to 0. Unless someone pointed a
+        // problem in the future.
+        return 0;
+      }
+      break;
     }
     case WM_SHOWWINDOW: {
       if (wparam == TRUE) {
@@ -328,36 +331,42 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
       break;
     }
     case WM_GETMINMAXINFO: {
-      MINMAXINFO* info = reinterpret_cast<MINMAXINFO*>(lparam);
+      MINMAXINFO *info = reinterpret_cast<MINMAXINFO *>(lparam);
       // For the special "unconstrained" values, leave the defaults.
       if (this->minimum_size_.x != 0)
-        info->ptMinTrackSize.x = static_cast<LONG> (this->minimum_size_.x * this->pixel_ratio_ + 16);
+        info->ptMinTrackSize.x =
+            static_cast<LONG>(this->minimum_size_.x * this->pixel_ratio_ + 16);
       if (this->minimum_size_.y != 0)
-        info->ptMinTrackSize.y = static_cast<LONG> (this->minimum_size_.y * this->pixel_ratio_ + 9);
-      
+        info->ptMinTrackSize.y =
+            static_cast<LONG>(this->minimum_size_.y * this->pixel_ratio_ + 9);
+
       if (this->maximum_size_.x != -1) {
-        info->ptMaxTrackSize.x = static_cast<LONG>(this->maximum_size_.x * this->pixel_ratio_ + 16);
+        info->ptMaxTrackSize.x =
+            static_cast<LONG>(this->maximum_size_.x * this->pixel_ratio_ + 16);
         if (this->maximum_size_.y == -1) {
           // fix: https://guide.backlog.com/view/SBIFX-7951
-          NCCALCSIZE_PARAMS* sz = reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam);
+          NCCALCSIZE_PARAMS *sz = reinterpret_cast<NCCALCSIZE_PARAMS *>(lparam);
           LONG t = 8;
-          HMONITOR monitor = MonitorFromRect(&sz->rgrc[0], MONITOR_DEFAULTTONEAREST);
+          HMONITOR monitor =
+              MonitorFromRect(&sz->rgrc[0], MONITOR_DEFAULTTONEAREST);
           if (monitor != NULL) {
             MONITORINFO monitorInfo;
             monitorInfo.cbSize = sizeof(MONITORINFO);
             if (GetMonitorInfo(monitor, &monitorInfo) == TRUE) {
               t = sz->rgrc[0].top - monitorInfo.rcWork.top;
             }
-            info->ptMaxTrackSize.y = monitorInfo.rcWork.bottom + t / 2; // Full height excluding taskbar
+            info->ptMaxTrackSize.y = monitorInfo.rcWork.bottom +
+                                     t / 2;  // Full height excluding taskbar
           }
         }
       }
       if (this->maximum_size_.y != -1)
-        info->ptMaxTrackSize.y = static_cast<LONG>(this->maximum_size_.y * this->pixel_ratio_ + 9);
+        info->ptMaxTrackSize.y =
+            static_cast<LONG>(this->maximum_size_.y * this->pixel_ratio_ + 9);
       break;
     }
     case WM_DPICHANGED: {
-      this->pixel_ratio_ = (float) LOWORD(wparam) / USER_DEFAULT_SCREEN_DPI;
+      this->pixel_ratio_ = (float)LOWORD(wparam) / USER_DEFAULT_SCREEN_DPI;
 
       auto newRectSize = reinterpret_cast<RECT *>(lparam);
       LONG newWidth = newRectSize->right - newRectSize->left;
@@ -378,47 +387,41 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
         MoveWindow(child_content_, rect.left, rect.top, rect.right - rect.left,
                    rect.bottom - rect.top, TRUE);
       }
-      LONG_PTR gwlStyle =
-          GetWindowLongPtr(window_handle_, GWL_STYLE);
+      LONG_PTR gwlStyle = GetWindowLongPtr(window_handle_, GWL_STYLE);
       if ((gwlStyle & (WS_CAPTION | WS_THICKFRAME)) == 0 &&
           wparam == SIZE_MAXIMIZED) {
-          EmitEvent("enter-full-screen");
-          this->last_state = STATE_FULLSCREEN_ENTERED;
-      }
-      else if (this->last_state == STATE_FULLSCREEN_ENTERED &&
-          wparam == SIZE_RESTORED) {
-          ForceChildRefresh();
-          EmitEvent("leave-full-screen");
+        EmitEvent("enter-full-screen");
+        this->last_state = STATE_FULLSCREEN_ENTERED;
+      } else if (this->last_state == STATE_FULLSCREEN_ENTERED &&
+                 wparam == SIZE_RESTORED) {
+        ForceChildRefresh();
+        EmitEvent("leave-full-screen");
+        last_state = STATE_NORMAL;
+      } else if (wparam == SIZE_MAXIMIZED) {
+        EmitEvent("maximize");
+        last_state = STATE_MAXIMIZED;
+      } else if (wparam == SIZE_MINIMIZED) {
+        EmitEvent("minimize");
+        last_state = STATE_MINIMIZED;
+      } else if (wparam == SIZE_RESTORED) {
+        if (last_state == STATE_MAXIMIZED) {
+          EmitEvent("unmaximize");
           last_state = STATE_NORMAL;
-      }
-      else if (wparam == SIZE_MAXIMIZED) {
-          EmitEvent("maximize");
-          last_state = STATE_MAXIMIZED;
-      }
-      else if (wparam == SIZE_MINIMIZED) {
-          EmitEvent("minimize");
-          last_state = STATE_MINIMIZED;
-      }
-      else if (wparam == SIZE_RESTORED) {
-          if (last_state == STATE_MAXIMIZED) {
-              EmitEvent("unmaximize");
-              last_state = STATE_NORMAL;
-          }
-          else if (last_state == STATE_MINIMIZED) {
-              EmitEvent("restore");
-              last_state = STATE_NORMAL;
-          }
+        } else if (last_state == STATE_MINIMIZED) {
+          EmitEvent("restore");
+          last_state = STATE_NORMAL;
+        }
       }
       EmitEvent("resized");
       break;
     }
 
     case WM_MOVE:
-      EmitEvent("moved");
-      lastRect = {0, 0, 0, 0};
-      lastPoint = {0, 0};
-      deltaX = 0;
-      deltaY = 0;
+      // EmitEvent("moved");
+      // lastRect = {0, 0, 0, 0};
+      // lastPoint = {0, 0};
+      // deltaX = 0;
+      // deltaY = 0;
       break;
 
     case WM_ACTIVATE: {
@@ -454,218 +457,232 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
       break;
     }
     case WM_WINDOWPOSCHANGED: {
-      lastRect = {0, 0, 0, 0};
-      lastPoint = {0, 0};
-      deltaX = 0;
-      deltaY = 0;
+      // lastRect = {0, 0, 0, 0};
+      // lastPoint = {0, 0};
+      // deltaX = 0;
+      // deltaY = 0;
       break;
     }
     case WM_MOVING: {
       // Get pointer to the window's RECT
-      RECT* rect = reinterpret_cast<RECT*>(lparam);
-  
+      RECT *rect = reinterpret_cast<RECT *>(lparam);
+
       // Update delta based on mouse position
       if (lastPoint.x == 0 && lastPoint.y == 0) {
-          GetCursorPos(&lastPoint);
+        GetCursorPos(&lastPoint);
       }
       POINT currentPoint;
       GetCursorPos(&currentPoint);
       deltaX += currentPoint.x - lastPoint.x;
       deltaY += currentPoint.y - lastPoint.y;
       lastPoint = currentPoint;
-  
+
       // Clone rect for calculation
       RECT cloneRect = *rect;
-  
+
       // Set snap threshold and margin (in pixel_ratio_)
       int snapThreshold = int(round(10 * pixel_ratio_));
       int baseMarginHorizontal = int(floor(12 / pixel_ratio_));
       int baseMarginVertical = int(round(4 / pixel_ratio_));
-  
-      //Size of the window
+
+      // Size of the window
       int width = cloneRect.right - cloneRect.left;
       int height = cloneRect.bottom - cloneRect.top;
-  
+
+      //  Define the threshold for moving too fast (fastMovementThreshold)
+      int fastMovementThreshold = snapThreshold * 3;
+      // If the delta is too large, break the loop
+      if (abs(deltaX) > fastMovementThreshold ||
+          abs(deltaY) > fastMovementThreshold) {
+        *rect = cloneRect;
+        lastRect = {0, 0, 0, 0};
+        lastPoint = {0, 0};
+        deltaX = 0;
+        deltaY = 0;
+        break;
+      }
+
       // Tracking snap candidates
       bool snapCandidateX = false;
       bool snapCandidateY = false;
       int candidateSnapX = cloneRect.left;
       int candidateSnapY = cloneRect.top;
-      int minDx = snapThreshold + 1; // Minimum difference for snap horizontally
-      int minDy = snapThreshold + 1; // Minimum difference for snap vertically
-  
-      //If the delta is too large, break the loop
-      if (abs(deltaX) > snapThreshold * 2 || abs(deltaY) > snapThreshold * 2) {
-          break;
+      int minDx =
+          snapThreshold + 1;  // Minimum difference for snap horizontally
+      int minDy = snapThreshold + 1;  // Minimum difference for snap vertically
+
+      // If the movement is small (less than 5 pixels), update cloneRect based
+      // on delta
+      if (abs(lastRect.left - cloneRect.left) < 5 &&
+          abs(lastRect.top - cloneRect.top) < 5) {
+        cloneRect.left = lastRect.left + deltaX;
+        cloneRect.top = lastRect.top + deltaY;
+        cloneRect.right = cloneRect.left + width;
+        cloneRect.bottom = cloneRect.top + height;
       }
-  
-      // If the movement is small (less than 5 pixels), update cloneRect based on delta
-      if (abs(lastRect.left - cloneRect.left) < 5 && abs(lastRect.top - cloneRect.top) < 5) {
-          cloneRect.left = lastRect.left + deltaX;
-          cloneRect.top = lastRect.top + deltaY;
-          cloneRect.right = cloneRect.left + width;
-          cloneRect.bottom = cloneRect.top + height;
-      }
-  
+
       MultiWindowManager *manager = MultiWindowManager::Instance();
       if (manager) {
-          for (auto &w : manager->windows_) {
-              HWND otherHwnd = w.second->GetWindowHandle();
-              // Skip its own window, "Toast", "Dialog" or windows that are not visible, covered
-              wchar_t title[256];
-              GetWindowText(otherHwnd, title, 256);
-              std::wstring titleW(title);
-              if (otherHwnd == hwnd || titleW == L"Toast" || titleW == L"Dialog" ||
-                  !IsWindowVisible(otherHwnd) || IsWindowCovered(otherHwnd)) {
-                  continue;
-              }
-              RECT otherRect;
-              GetWindowRect(otherHwnd, &otherRect);
-              bool isMenu = (titleW == L"FLUTTERVIEW");
-  
-              // Set margin for each window
-              int marginHorizontal = baseMarginHorizontal;
-              int marginVertical = baseMarginVertical;
-              if (isMenu) {
-                  marginHorizontal -= int(round(5 / pixel_ratio_));
-                  marginVertical -= int(round(10 / pixel_ratio_));
-              }
-  
-              // Check snapping horizontally:
-              // 1. If the left edge of cloneRect is close to the right edge of another window.
-              int diff = abs(cloneRect.left - otherRect.right);
-              if (diff < snapThreshold &&
-                  (cloneRect.top <= otherRect.bottom) &&
-                  (cloneRect.bottom >= otherRect.top)) {
-                  int candidate = otherRect.right - min(marginHorizontal, snapThreshold);
-                  if (diff < minDx) {
-                      minDx = diff;
-                      candidateSnapX = candidate;
-                      snapCandidateX = true;
-                  }
-              }
-              // 2. If the right edge of cloneRect is close to the left edge of another window.
-              diff = abs(cloneRect.right - otherRect.left);
-              if (diff < snapThreshold &&
-                  (cloneRect.top <= otherRect.bottom) &&
-                  (cloneRect.bottom >= otherRect.top)) {
-                  int candidate = otherRect.left - width + min(marginHorizontal, snapThreshold);
-                  if (diff < minDx) {
-                      minDx = diff;
-                      candidateSnapX = candidate;
-                      snapCandidateX = true;
-                  }
-              }
-  
-              // Check snapping vertically:
-              // 1. If the top edge of cloneRect is close to the bottom edge of another window.
-              diff = abs(cloneRect.top - otherRect.bottom);
-              if (diff < snapThreshold &&
-                  (cloneRect.left <= otherRect.right) &&
-                  (cloneRect.right >= otherRect.left)) {
-                  int candidate = otherRect.bottom - min(marginVertical, snapThreshold);
-                  if (diff < minDy) {
-                      minDy = diff;
-                      candidateSnapY = candidate;
-                      snapCandidateY = true;
-                  }
-              }
-              // 2. If the bottom edge of cloneRect is close to the top edge of another window.
-              diff = abs(cloneRect.bottom - otherRect.top);
-              if (diff < snapThreshold &&
-                  (cloneRect.left <= otherRect.right) &&
-                  (cloneRect.right >= otherRect.left)) {
-                  int candidate = otherRect.top - height + min(marginVertical, snapThreshold);
-                  if (diff < minDy) {
-                      minDy = diff;
-                      candidateSnapY = candidate;
-                      snapCandidateY = true;
-                  }
-              }
-          } // end for each window
+        for (auto &w : manager->windows_) {
+          HWND otherHwnd = w.second->GetWindowHandle();
+          // Skip its own window, "Toast", "Dialog" or windows that are not
+          // visible, covered
+          wchar_t title[256];
+          GetWindowText(otherHwnd, title, 256);
+          std::wstring titleW(title);
+          if (otherHwnd == hwnd || titleW == L"Toast" || titleW == L"Dialog" ||
+              !IsWindowVisible(otherHwnd) || IsWindowCovered(otherHwnd)) {
+            continue;
+          }
+          RECT otherRect;
+          GetWindowRect(otherHwnd, &otherRect);
+          bool isMenu = (titleW == L"FLUTTERVIEW");
+
+          // Set margin for each window
+          int marginHorizontal = baseMarginHorizontal;
+          int marginVertical = baseMarginVertical;
+          if (isMenu) {
+            marginHorizontal -= int(round(5 / pixel_ratio_));
+            marginVertical -= int(round(10 / pixel_ratio_));
+          }
+
+          // Check snapping horizontally:
+          // 1. If the left edge of cloneRect is close to the right edge of
+          // another window.
+          int diff = abs(cloneRect.left - otherRect.right);
+          if (diff < snapThreshold && (cloneRect.top <= otherRect.bottom) &&
+              (cloneRect.bottom >= otherRect.top)) {
+            int candidate =
+                otherRect.right - min(marginHorizontal, snapThreshold);
+            if (diff < minDx) {
+              minDx = diff;
+              candidateSnapX = candidate;
+              snapCandidateX = true;
+            }
+          }
+          // 2. If the right edge of cloneRect is close to the left edge of
+          // another window.
+          diff = abs(cloneRect.right - otherRect.left);
+          if (diff < snapThreshold && (cloneRect.top <= otherRect.bottom) &&
+              (cloneRect.bottom >= otherRect.top)) {
+            int candidate =
+                otherRect.left - width + min(marginHorizontal, snapThreshold);
+            if (diff < minDx) {
+              minDx = diff;
+              candidateSnapX = candidate;
+              snapCandidateX = true;
+            }
+          }
+
+          // Check snapping vertically:
+          // 1. If the top edge of cloneRect is close to the bottom edge of
+          // another window.
+          diff = abs(cloneRect.top - otherRect.bottom);
+          if (diff < snapThreshold && (cloneRect.left <= otherRect.right) &&
+              (cloneRect.right >= otherRect.left)) {
+            int candidate =
+                otherRect.bottom - min(marginVertical, snapThreshold);
+            if (diff < minDy) {
+              minDy = diff;
+              candidateSnapY = candidate;
+              snapCandidateY = true;
+            }
+          }
+          // 2. If the bottom edge of cloneRect is close to the top edge of
+          // another window.
+          diff = abs(cloneRect.bottom - otherRect.top);
+          if (diff < snapThreshold && (cloneRect.left <= otherRect.right) &&
+              (cloneRect.right >= otherRect.left)) {
+            int candidate =
+                otherRect.top - height + min(marginVertical, snapThreshold);
+            if (diff < minDy) {
+              minDy = diff;
+              candidateSnapY = candidate;
+              snapCandidateY = true;
+            }
+          }
+        }  // end for each window
       }
-  
-      // Set unsnap threshold: if the position of cloneRect is too far from the candidate, then unsnap
+
+      // Set unsnap threshold: if the position of cloneRect is too far from the
+      // candidate, then unsnap
       const int unsnapThreshold = snapThreshold + 5;
       bool finalSnapX = snapCandidateX;
       bool finalSnapY = snapCandidateY;
       if (snapCandidateX) {
-          if (abs(cloneRect.left - candidateSnapX) > unsnapThreshold) {
-              finalSnapX = false;
-          }
+        if (abs(cloneRect.left - candidateSnapX) > unsnapThreshold) {
+          finalSnapX = false;
+        }
       }
       if (snapCandidateY) {
-          if (abs(cloneRect.top - candidateSnapY) > unsnapThreshold) {
-              finalSnapY = false;
-          }
+        if (abs(cloneRect.top - candidateSnapY) > unsnapThreshold) {
+          finalSnapY = false;
+        }
       }
-  
+
       // Update RECT based on final snap result
       if (finalSnapX || finalSnapY) {
-          rect->left = finalSnapX ? candidateSnapX : cloneRect.left;
-          rect->top  = finalSnapY ? candidateSnapY : cloneRect.top;
-          rect->right = rect->left + width;
-          rect->bottom = rect->top + height;
-          if (lastRect.left == 0 && lastRect.top == 0) {
-              lastRect = *rect;
-          }
+        rect->left = finalSnapX ? candidateSnapX : cloneRect.left;
+        rect->top = finalSnapY ? candidateSnapY : cloneRect.top;
+        rect->right = rect->left + width;
+        rect->bottom = rect->top + height;
+        if (lastRect.left == 0 && lastRect.top == 0) {
+          lastRect = *rect;
+        }
       } else {
-          // If not snap, keep cloneRect and reset tracking variables.
-          *rect = cloneRect;
-          lastRect = {0, 0, 0, 0};
-          lastPoint = {0, 0};
-          deltaX = 0;
-          deltaY = 0;
+        // If not snap, keep cloneRect and reset tracking variables.
+        *rect = cloneRect;
+        lastRect = {0, 0, 0, 0};
+        lastPoint = {0, 0};
+        deltaX = 0;
+        deltaY = 0;
       }
       break;
-  }
-  
-
+    }
 
     case WM_NCACTIVATE: {
-        char* eventName;
-        if (wparam == TRUE) {
-            eventName = "focus";
-        }
-        else {
-            eventName = "blur";
-        }
-        EmitEvent(eventName);
-        break;
+      char *eventName;
+      if (wparam == TRUE) {
+        eventName = "focus";
+      } else {
+        eventName = "blur";
+      }
+      EmitEvent(eventName);
+      break;
     }
     case WM_ERASEBKGND: {
-        if(is_reset_bg_) break;
-        HDC hdc = (HDC) wparam;
-        HBRUSH brush = CreateSolidBrush(this->window_background_color_);
-        RECT rect;
-        GetClientRect(hwnd, &rect);
-        FillRect(hdc, &rect, brush);
-        DeleteObject(brush);
-        return 1; // Background has been erased
+      if (is_reset_bg_) break;
+      HDC hdc = (HDC)wparam;
+      HBRUSH brush = CreateSolidBrush(this->window_background_color_);
+      RECT rect;
+      GetClientRect(hwnd, &rect);
+      FillRect(hdc, &rect, brush);
+      DeleteObject(brush);
+      return 1;  // Background has been erased
     }
 
-    default: break;
+    default:
+      break;
   }
 
   return DefWindowProc(window_handle_, message, wparam, lparam);
 }
 
-void FlutterWindow::tryInvokeChannelOnDestroy()
-{
+void FlutterWindow::tryInvokeChannelOnDestroy() {
   if (window_channel_) {
-      auto args = flutter::EncodableValue(flutter::EncodableMap());
-      window_channel_->InvokeMethod(0, "onDestroy", &args);
-      window_channel_->SetMethodCallHandler(nullptr);
-      window_channel_.reset();
+    auto args = flutter::EncodableValue(flutter::EncodableMap());
+    window_channel_->InvokeMethod(0, "onDestroy", &args);
+    window_channel_->SetMethodCallHandler(nullptr);
+    window_channel_.reset();
   }
 }
 
-void FlutterWindow::EmitEvent(const char* eventName)
-{
-    auto params = flutter::EncodableMap();
-    params.emplace(flutter::EncodableValue("eventName"), flutter::EncodableValue(eventName));
-    auto args = flutter::EncodableValue(std::move(params));
-    window_channel_->InvokeMethod(0, "onEvent", &args);
+void FlutterWindow::EmitEvent(const char *eventName) {
+  auto params = flutter::EncodableMap();
+  params.emplace(flutter::EncodableValue("eventName"),
+                 flutter::EncodableValue(eventName));
+  auto args = flutter::EncodableValue(std::move(params));
+  window_channel_->InvokeMethod(0, "onEvent", &args);
 }
 
 void FlutterWindow::Destroy() {
@@ -690,6 +707,7 @@ FlutterWindow::~FlutterWindow() {
   UnregisterWindowClass();
 }
 
-void DesktopMultiWindowSetWindowCreatedCallback(WindowCreatedCallback callback) {
+void DesktopMultiWindowSetWindowCreatedCallback(
+    WindowCreatedCallback callback) {
   _g_window_created_callback = callback;
 }
