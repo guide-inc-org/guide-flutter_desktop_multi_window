@@ -96,6 +96,8 @@ public:
 
   void StartResizing(int64_t id, const flutter::EncodableMap *params);
 
+  void SetBorderRadiusWin10(int64_t id,  double_t width, double_t height, double_t radius);
+
 private:
   void HandleWindowChannelCall(
       int64_t from_window_id,

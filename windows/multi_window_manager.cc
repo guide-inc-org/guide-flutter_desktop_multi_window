@@ -349,6 +349,16 @@ void MultiWindowManager::SetSkipTaskbar(int64_t id, const flutter::EncodableMap 
   }
 }
 
+void MultiWindowManager::SetBorderRadiusWin10(int64_t id,
+  double width, double height, double radius) {
+  auto window = windows_.find(id);
+
+  if (window != windows_.end()) {
+  window->second->SetBorderRadiusWin10(width, height, radius);
+  }
+}
+
+
 // Convert window positions into a Flutter-compatible map
 flutter::EncodableMap MultiWindowManager::GetAllWindowsPositionAsMap()
 {

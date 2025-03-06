@@ -252,7 +252,22 @@ void DesktopMultiWindowPlugin::HandleMethodCall(
   } else if (method_call.method_name() == "getAllWindowsPosition") {
     auto positions = MultiWindowManager::Instance()->GetAllWindowsPositionAsMap();
     result->Success(flutter::EncodableValue(positions));
-  }
+  } else if (method_call.method_name() == "setBorderRadiusWin10") {
+    auto *arguments =
+        std::get_if<flutter::EncodableMap>(method_call.arguments());
+    auto window_id =
+        arguments->at(flutter::EncodableValue("windowId")).LongValue();
+
+    auto width =
+        std::get<double_t>(arguments->at(flutter::EncodableValue("width")));
+    auto height =
+        std::get<double_t>(arguments->at(flutter::EncodableValue("height")));
+    auto radius =
+        std::get<double_t>(arguments->at(flutter::EncodableValue("radius")));
+    MultiWindowManager::Instance()->SetBorderRadiusWin10(window_id, width,
+                                                         height, radius);
+    result->Success();
+  } 
   result->NotImplemented();
 }
 

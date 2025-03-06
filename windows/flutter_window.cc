@@ -53,7 +53,7 @@ bool IsWindows11OrGreater() {
     dwBuild = (DWORD)(HIWORD(dwVersion));
 #pragma warning(pop)
 
-  return dwBuild < 22000;
+  return dwBuild >= 22000;
 }
 
 namespace {
@@ -277,9 +277,9 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
             }
             else {
                 NCCALCSIZE_PARAMS* sz = reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam);
-                // on windows 10, if set to 0, there's a white line at the top
+                // on windows 11, if set to 0, there's a white line at the top
                 // of the app and I've yet to find a way to remove that.
-                sz->rgrc[0].top += IsWindows11OrGreater() ? 0 : 1;
+                sz->rgrc[0].top += IsWindows11OrGreater() ? 1: 0;
                 // We need the following code to resize the window.
                 // https://github.com/rustdesk/rustdesk/discussions/9061
                 sz->rgrc[0].right -= 8;

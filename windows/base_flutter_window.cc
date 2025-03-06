@@ -38,6 +38,8 @@ void CenterRectToMonitor(LPRECT prc) {
 
 }
 
+typedef LONG(WINAPI *RtlGetVersionPtr)(PRTL_OSVERSIONINFOEXW);
+
 std::wstring Utf16FromUtf8(const std::string &string) {
   int size_needed = MultiByteToWideChar(CP_UTF8, 0, string.c_str(), -1, nullptr, 0);
   if (size_needed == 0) {
@@ -51,6 +53,46 @@ std::wstring Utf16FromUtf8(const std::string &string) {
   return wstrTo;
 }
 
+}
+
+bool isWindows11() {
+  DWORD dwVersion = 0;
+  DWORD dwBuild = 0;
+
+#pragma warning(push)
+#pragma warning(disable : 4996)
+  dwVersion = GetVersion();
+  // Get the build number.
+  if (dwVersion < 0x80000000) dwBuild = (DWORD)(HIWORD(dwVersion));
+#pragma warning(pop)
+
+  return dwBuild >= 22000;
+}
+
+
+void BaseFlutterWindow::SetBorderRadiusWin10(double_t width, double_t height,
+                                             double_t radius) {
+  // For window 10 or below only
+  bool isWin11 = isWindows11();
+  if (isWin11) {
+    return;
+  }
+  auto handle = GetWindowHandle();
+  if (!handle) {
+    return;
+  }
+  // Remove the title bar and the thick frame
+  LONG lStyle = GetWindowLong(handle, GWL_STYLE);
+  SetWindowLong(handle, GWL_STYLE, lStyle & ~WS_CAPTION & ~WS_THICKFRAME);
+  SetWindowPos(handle, NULL, 0, 0, 0, 0,
+               SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE |
+                   SWP_FRAMECHANGED);
+  // Multiple the radius by the pixel ratio
+  HRGN hRgn = CreateRoundRectRgn(8, 0, int(ceil(width * pixel_ratio_) + 8),
+                                 int(ceil(height * pixel_ratio_)),
+                                 int(ceil(radius)), int(ceil(radius)));
+  SetWindowRgn(handle, hRgn, TRUE);
+  DeleteObject(hRgn);
 }
 
 void BaseFlutterWindow::Center() {

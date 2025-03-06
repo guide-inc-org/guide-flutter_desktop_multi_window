@@ -131,4 +131,6 @@ abstract class WindowController {
 
   /// Makes the window not show in the taskbar / dock.
   Future<void> setSkipTaskbar(bool isSkipTaskbar);
+
+  Future<void> setBorderRadiusWin10(double width, double height, double radius);
 }

@@ -291,5 +291,16 @@ class WindowControllerMainImpl extends WindowController {
     };
     await _channel.invokeMethod('setSkipTaskbar', arguments);
   }
-  
+
+  @override
+  Future<void> setBorderRadiusWin10(
+      double width, double height, double radius) async {
+    final Map<String, dynamic> arguments = {
+      'windowId': _id,
+      'width': width,
+      'height': height,
+      'radius': radius,
+    };
+    await _channel.invokeMethod('setBorderRadiusWin10', arguments);
+  }
 }

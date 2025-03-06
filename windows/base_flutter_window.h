@@ -57,6 +57,8 @@ class BaseFlutterWindow {
 
   void SetBounds(double_t x, double_t y, double_t width, double_t height);
 
+  void SetBorderRadiusWin10(double_t width, double_t height, double_t radius);
+
   void SetHeight(double_t height);
   
   flutter::EncodableMap GetBounds();
