@@ -44,6 +44,8 @@ class FlutterWindow : public BaseFlutterWindow {
 
   HWND GetWindowHandle() override { return window_handle_; }
 
+  static LRESULT CALLBACK SubclassProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+
  private:
 
   std::weak_ptr<FlutterWindowCallback> callback_;

@@ -121,7 +121,7 @@ class DesktopMultiWindow {
 
       if (call.method != 'onEvent') throw UnimplementedError();
       // {'fromWindowId': xxx, arguments: {'eventName':xxx, 'windowId': xxx}}
-      String eventName = call.arguments["arguments"]['eventName'].toString();
+      String eventName = call.arguments['arguments']['eventName'].toString();
       listener.onWindowEvent(eventName);
       Map<String, Function> funcMap = {
         kWindowEventClose: listener.onWindowClose,
@@ -137,6 +137,7 @@ class DesktopMultiWindow {
         kWindowEventMoved: listener.onWindowMoved,
         kWindowEventEnterFullScreen: listener.onWindowEnterFullScreen,
         kWindowEventLeaveFullScreen: listener.onWindowLeaveFullScreen,
+        kWindowEventChangeKeyboard: listener.onWindowChangeKeyboard,
       };
       funcMap[eventName]?.call();
     }

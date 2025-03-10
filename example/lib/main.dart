@@ -6,7 +6,6 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/services/mouse_cursor.dart';
 import 'package:flutter_multi_window_example/event_widget.dart';
-import 'dart:ui' as ui;
 
 int winId = 0;
 
@@ -185,7 +184,7 @@ class _SubWindowContentState extends State<SubWindowContent>
 
   @override
   void onWindowEvent(String eventName) {
-    print("window event: ${eventName}");
+    print("window event: $eventName");
   }
 
   @override
@@ -196,6 +195,11 @@ class _SubWindowContentState extends State<SubWindowContent>
   @override
   void onWindowLeaveFullScreen() {
     print("exit fullscreen");
+  }
+
+  @override
+  void onWindowChangeKeyboard() {
+    print("onWindowChangeKeyboard");
   }
 
   @override
@@ -210,7 +214,8 @@ class _SubWindowContentState extends State<SubWindowContent>
               onPanDown: (_) {
                 widget.windowController.startDragging();
               },
-              child: Row(children: [Expanded(child: Text("Multi Window App"))]),
+              child: const Row(
+                  children: [Expanded(child: Text("Multi Window App"))]),
             ),
           ),
           body: Column(
@@ -336,7 +341,7 @@ class _SubWindowContentState extends State<SubWindowContent>
                         .setPreventFocus(true);
                   }
                 },
-                child: Text('prevent focus'),
+                child: const Text('prevent focus'),
               ),
               TextButton(
                 onPressed: () async {
