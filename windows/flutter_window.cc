@@ -141,7 +141,7 @@ FlutterWindow::FlutterWindow(
   RECT frame;
   GetClientRect(window_handle, &frame);
   flutter::DartProject project(L"data");
-  project.set_dart_entrypoint_arguments({"multi_window", std::to_string(id), std::move(args)});
+  project.set_dart_entrypoint_arguments({"multi_window", std::to_string(id), args});
   flutter_controller_ = std::make_unique<flutter::FlutterViewController>(
       frame.right - frame.left, frame.bottom - frame.top, project);
   // Ensure that basic setup of the controller was successful.
@@ -159,7 +159,7 @@ FlutterWindow::FlutterWindow(
       flutter_controller_->engine()->GetRegistrarForPlugin("DesktopMultiWindowPlugin"), id_);
 
   if (_g_window_created_callback) {
-    _g_window_created_callback(flutter_controller_.get());
+    _g_window_created_callback(flutter_controller_.get(), std::move(args));
   }
 
   // hide the window when created.
