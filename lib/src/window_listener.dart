@@ -11,9 +11,9 @@ const kWindowEventMove = 'move';
 const kWindowEventMoved = 'moved';
 const kWindowEventEnterFullScreen = 'enter-full-screen';
 const kWindowEventLeaveFullScreen = 'leave-full-screen';
+const kWindowEventChangeKeyboard = 'onchangekeyboard';
 
 abstract class MultiWindowListener {
-
   /// Emitted when the window is going to be closed.
   void onWindowClose() {}
 
@@ -56,6 +56,10 @@ abstract class MultiWindowListener {
 
   /// Emitted when the window leaves a full-screen state.
   void onWindowLeaveFullScreen() {}
+
+  /// Emitted when the window leaves a on keyboard change state.
+  /// @platforms windows
+  void onWindowChangeKeyboard() {}
 
   /// Emitted all events.
   void onWindowEvent(String eventName) {}

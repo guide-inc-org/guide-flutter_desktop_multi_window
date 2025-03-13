@@ -17,6 +17,9 @@
 #include "include/desktop_multi_window/desktop_multi_window_plugin.h"
 #include "multi_window_plugin_internal.h"
 
+#include <CommCtrl.h>
+#pragma comment(lib, "Comctl32.lib")
+
 /// RustDesk deps using method channel
 // #include <bitsdojo_window_windows/bitsdojo_window_plugin.h>
 #include <url_launcher_windows/url_launcher_windows.h>
@@ -150,6 +153,8 @@ FlutterWindow::FlutterWindow(
   }
   auto view_handle = flutter_controller_->view()->GetNativeWindow();
   SetParent(view_handle, window_handle);
+  if (view_handle)
+    SetWindowSubclass(view_handle, SubclassProc, 1, 0);
   MoveWindow(view_handle, 0, 0, frame.right - frame.left, frame.bottom - frame.top, true);
 
   RustDeskRegisterPlugins(flutter_controller_->engine());
@@ -170,6 +175,31 @@ FlutterWindow::FlutterWindow(
 FlutterWindow *FlutterWindow::GetThisFromHandle(HWND window) noexcept {
   return reinterpret_cast<FlutterWindow *>(
       GetWindowLongPtr(window, GWLP_USERDATA));
+}
+
+LRESULT CALLBACK FlutterWindow::SubclassProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
+  HWND parentHwnd = GetParent(hwnd);
+  auto window = reinterpret_cast<FlutterWindow *>(GetWindowLongPtr(parentHwnd, GWLP_USERDATA));
+  if (!window) {
+    // If somehow there's no valid pointer, call DefSubclassProc
+    return DefSubclassProc(hwnd, msg, wparam, lparam);
+  }
+  switch (msg) {
+    case WM_INPUTLANGCHANGE:
+      window->EmitEvent("onchangekeyboard");
+      break;
+    case WM_IME_NOTIFY:
+      if(wparam == IMN_SETCONVERSIONMODE)
+        window->EmitEvent("onchangekeyboard");
+      break;
+
+    case WM_DESTROY:
+      // You can optionally remove the subclass here if needed
+      RemoveWindowSubclass(hwnd, SubclassProc, uIdSubclass);
+      break;
+  }
+
+  return DefSubclassProc(hwnd, msg, wparam, lparam);
 }
 
 // static
