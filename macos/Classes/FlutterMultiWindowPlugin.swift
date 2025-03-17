@@ -95,6 +95,9 @@ public class FlutterMultiWindowPlugin: NSObject, FlutterPlugin {
     case "getAllSubWindowIds":
       let subWindowIds = MultiWindowManager.shared.getAllSubWindowIds()
       result(subWindowIds)
+    case "getAllWindowsPosition":
+      let positions = MultiWindowManager.shared.getAllWindowsPosition()
+      result(positions)
     case "focus":
       let windowId = call.arguments as! Int64
       MultiWindowManager.shared.focus(windowId: windowId)

@@ -132,6 +132,10 @@ class BaseFlutterWindow: NSObject {
     window.title = title
   }
 
+  func getTitle() -> String {
+    return window.title
+  }
+
   func close() {
     window.performClose(nil)
   }

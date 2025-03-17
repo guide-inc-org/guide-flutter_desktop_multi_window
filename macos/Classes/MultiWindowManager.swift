@@ -225,6 +225,25 @@ class MultiWindowManager {
   func getAllSubWindowIds() -> [Int64] {
     return windows.keys.filter { $0 != 0 }
   }
+
+  func getAllWindowsPosition() -> [Int64: NSDictionary] {
+    var windowFrames: [Int64: NSDictionary] = [:]
+    for windowId in getAllSubWindowIds() {
+      guard let window = windows[windowId] else {
+        debugPrint("window \(windowId) not exists.")
+        continue
+      }
+      if (window.isHidden()) {
+        continue
+      }
+      let title = window.getTitle()
+      if (title == "Dialog" || title == "Toast") {
+        continue
+      }
+      windowFrames[windowId] = window.getFrame()
+    }
+    return windowFrames
+  }
     
     func isPreventClose(windowId: Int64) -> Bool {
         guard let window = windows[windowId] else {
