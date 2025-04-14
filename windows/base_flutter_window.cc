@@ -87,10 +87,11 @@ void BaseFlutterWindow::SetBorderRadiusWin10(double_t width, double_t height,
   SetWindowPos(handle, NULL, 0, 0, 0, 0,
                SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE |
                    SWP_FRAMECHANGED);
+  int r = int(ceil(radius * pixel_ratio_));
   // Multiple the radius by the pixel ratio
   HRGN hRgn = CreateRoundRectRgn(8, 0, int(ceil(width * pixel_ratio_) + 8),
                                  int(ceil(height * pixel_ratio_)),
-                                 int(ceil(radius)), int(ceil(radius)));
+                                 r, r);
   SetWindowRgn(handle, hRgn, TRUE);
   DeleteObject(hRgn);
 }
