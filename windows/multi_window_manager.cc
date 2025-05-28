@@ -246,10 +246,12 @@ void MultiWindowManager::Minimize(int64_t id) {
     }
 }
 
-void MultiWindowManager::Maximize(int64_t id) {
+void MultiWindowManager::Maximize(const flutter::EncodableMap *args) {
+    auto id = args->at(flutter::EncodableValue("windowId")).LongValue();
+    bool vertically = std::get<bool>(args->at(flutter::EncodableValue("vertically")));
     auto window = windows_.find(id);
     if (window != windows_.end()) {
-        window->second->Maximize();
+        window->second->Maximize(vertically);
     }
 }
 

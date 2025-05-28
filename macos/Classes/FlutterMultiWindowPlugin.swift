@@ -107,7 +107,8 @@ public class FlutterMultiWindowPlugin: NSObject, FlutterPlugin {
       MultiWindowManager.shared.minimize(windowId: windowId)
       result(nil)
     case "maximize":
-      let windowId = call.arguments as! Int64
+      let arguments = call.arguments as! [String: Any?]
+      let windowId = arguments["windowId"] as! Int64
       MultiWindowManager.shared.maximize(windowId: windowId)
       result(nil)
     case "unmaximize":

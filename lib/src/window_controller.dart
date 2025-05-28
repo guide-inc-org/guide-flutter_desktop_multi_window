@@ -43,8 +43,8 @@ abstract class WindowController {
   /// @platforms macos
   Future<void> setMovable(bool isMovable);
 
-  /// Maximize the window.
-  Future<void> maximize();
+  /// Maximizes the window. `vertically` simulates aero snap, only works on Windows
+  Future<void> maximize({bool vertically = false});
 
   /// Unmaximize the window.
   Future<void> unmaximize();

@@ -138,8 +138,12 @@ class WindowControllerMainImpl extends WindowController {
   }
 
   @override
-  Future<void> maximize() {
-    return _channel.invokeMethod('maximize', _id);
+  Future<void> maximize({bool vertically = false}) {
+    final Map<String, dynamic> arguments = {
+      'vertically': vertically,
+      'windowId': _id
+    };
+    return _channel.invokeMethod('maximize', arguments);
   }
 
   @override

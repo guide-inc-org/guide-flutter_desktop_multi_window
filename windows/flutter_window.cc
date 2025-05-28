@@ -312,7 +312,7 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
             return 0;
         }
         if (wparam && this->title_bar_style_ == "hidden") {
-            // Add 8 pixel to the top border when maximized so the app isn't cut off
+            // Add pixel to the top border when maximized so the app isn't cut off
             if (this->IsMaximized()) {
                 adjustNCCALCSIZE(hwnd, reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam));
             }
@@ -321,11 +321,6 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
                 // on windows 11, if set to 0, there's a white line at the top
                 // of the app and I've yet to find a way to remove that.
                 sz->rgrc[0].top += IsWindows11OrGreater() ? 1: 0;
-                // We need the following code to resize the window.
-                // https://github.com/rustdesk/rustdesk/discussions/9061
-                sz->rgrc[0].right -= 8;
-                sz->rgrc[0].bottom -= 8;
-                sz->rgrc[0].left -= -8;
             }
 
             // Previously (WVR_HREDRAW | WVR_VREDRAW), but returning 0 or 1 doesn't
@@ -372,29 +367,35 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
       MINMAXINFO* info = reinterpret_cast<MINMAXINFO*>(lparam);
       // For the special "unconstrained" values, leave the defaults.
       if (this->minimum_size_.x != 0)
-        info->ptMinTrackSize.x = static_cast<LONG> (this->minimum_size_.x * this->pixel_ratio_ + 16);
+        info->ptMinTrackSize.x = static_cast<LONG> (this->minimum_size_.x * this->pixel_ratio_);
       if (this->minimum_size_.y != 0)
-        info->ptMinTrackSize.y = static_cast<LONG> (this->minimum_size_.y * this->pixel_ratio_ + 9);
+        info->ptMinTrackSize.y = static_cast<LONG> (this->minimum_size_.y * this->pixel_ratio_);
       
       if (this->maximum_size_.x != -1) {
-        info->ptMaxTrackSize.x = static_cast<LONG>(this->maximum_size_.x * this->pixel_ratio_ + 16);
+        info->ptMaxTrackSize.x = static_cast<LONG>(this->maximum_size_.x * this->pixel_ratio_);
         if (this->maximum_size_.y == -1) {
           // fix: https://guide.backlog.com/view/SBIFX-7951
           NCCALCSIZE_PARAMS* sz = reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam);
-          LONG t = 8;
+          LONG t = 0;
           HMONITOR monitor = MonitorFromRect(&sz->rgrc[0], MONITOR_DEFAULTTONEAREST);
+          HMONITOR mo = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
           if (monitor != NULL) {
             MONITORINFO monitorInfo;
+            MONITORINFO mi;
             monitorInfo.cbSize = sizeof(MONITORINFO);
-            if (GetMonitorInfo(monitor, &monitorInfo) == TRUE) {
-              t = sz->rgrc[0].top - monitorInfo.rcWork.top;
+            mi.cbSize = sizeof(MONITORINFO);
+            if (GetMonitorInfo(monitor, &monitorInfo)) {
+              info->ptMaxPosition.x = monitorInfo.rcWork.left;
             }
-            info->ptMaxTrackSize.y = monitorInfo.rcWork.bottom + t / 2; // Full height excluding taskbar
+            if (GetMonitorInfo(mo, &mi)) {
+              t = sz->rgrc[0].top / 2 - mi.rcWork.top;
+            }
+            info->ptMaxTrackSize.y = mi.rcWork.bottom + t; // Full height excluding taskbar
           }
         }
       }
       if (this->maximum_size_.y != -1)
-        info->ptMaxTrackSize.y = static_cast<LONG>(this->maximum_size_.y * this->pixel_ratio_ + 9);
+        info->ptMaxTrackSize.y = static_cast<LONG>(this->maximum_size_.y * this->pixel_ratio_);
       break;
     }
     case WM_DPICHANGED: {

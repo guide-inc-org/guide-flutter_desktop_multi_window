@@ -40,7 +40,7 @@ public:
 
   void Minimize(int64_t id);
 
-  void Maximize(int64_t id);
+  void Maximize(const flutter::EncodableMap *args);
 
   bool IsMaximized(int64_t id);
 

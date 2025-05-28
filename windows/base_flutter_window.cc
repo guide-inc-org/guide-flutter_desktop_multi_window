@@ -89,7 +89,7 @@ void BaseFlutterWindow::SetBorderRadiusWin10(double_t width, double_t height,
                    SWP_FRAMECHANGED);
   int r = int(ceil(radius * pixel_ratio_));
   // Multiple the radius by the pixel ratio
-  HRGN hRgn = CreateRoundRectRgn(8, 0, int(ceil(width * pixel_ratio_) + 8),
+  HRGN hRgn = CreateRoundRectRgn(0, 0, int(ceil(width * pixel_ratio_)),
                                  int(ceil(height * pixel_ratio_)),
                                  r, r);
   SetWindowRgn(handle, hRgn, TRUE);
@@ -193,10 +193,7 @@ void BaseFlutterWindow::SetFullscreen(bool fullscreen) {
             SetAsFrameless();
 
         if (g_maximized_before_fullscreen) {
-            flutter::EncodableMap args2 = flutter::EncodableMap();
-            args2[flutter::EncodableValue("vertically")] =
-                flutter::EncodableValue(false);
-            Maximize(args2);
+            Maximize(false);
         }
         else {
             ::SetWindowPos(
@@ -273,19 +270,6 @@ bool BaseFlutterWindow::IsMaximized() {
     return windowPlacement.showCmd == SW_SHOWMAXIMIZED;
 }
 
-void BaseFlutterWindow::Maximize() {
-    auto window = GetWindowHandle();
-    if (!window) {
-        return;
-    }
-    WINDOWPLACEMENT windowPlacement;
-    GetWindowPlacement(window, &windowPlacement);
-    // non vertical now
-    if (windowPlacement.showCmd != SW_SHOWMAXIMIZED) {
-        PostMessage(window, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
-    }
-}
-
 void BaseFlutterWindow::Unmaximize() {
     auto window = GetWindowHandle();
     if (!window) {
@@ -353,10 +337,7 @@ void BaseFlutterWindow::ShowTitlebar(bool show) {
                     SWP_FRAMECHANGED);
 }
 
-void BaseFlutterWindow::Maximize(const flutter::EncodableMap& args) {
-    bool vertically =
-        std::get<bool>(args.at(flutter::EncodableValue("vertically")));
-
+void BaseFlutterWindow::Maximize(bool vertically) {
     HWND hwnd = GetWindowHandle();
     WINDOWPLACEMENT windowPlacement;
     GetWindowPlacement(hwnd, &windowPlacement);
@@ -494,8 +475,8 @@ void BaseFlutterWindow::SetBounds(double_t x, double_t y, double_t width, double
     }
   }
   MoveWindow(handle, static_cast<int>(x * pixel_ratio_), static_cast<int>(y * pixel_ratio_),
-             static_cast<int>(width * pixel_ratio_ + 16),
-             static_cast<int>(height * pixel_ratio_ + 9),
+             static_cast<int>(width * pixel_ratio_),
+             static_cast<int>(height * pixel_ratio_),
              TRUE);
 }
 
@@ -513,7 +494,7 @@ void BaseFlutterWindow::SetHeight(double_t height) {
       int y = rect.top;
       
       // Adjust the window size to the new height while keeping other dimensions the same
-      SetWindowPos(handle, nullptr, x, y, width, static_cast<int>(height * pixel_ratio_ + 9), SWP_NOZORDER | SWP_NOMOVE);
+      SetWindowPos(handle, nullptr, x, y, width, static_cast<int>(height * pixel_ratio_), SWP_NOZORDER | SWP_NOMOVE);
   }
 }
 
@@ -525,8 +506,8 @@ flutter::EncodableMap BaseFlutterWindow::GetBounds() {
     if (GetWindowRect(handle, &rect)) {
       double x = rect.left / pixel_ratio_;
       double y = rect.top / pixel_ratio_;
-      double width = (rect.right - rect.left) / pixel_ratio_ - 16;
-      double height = (rect.bottom - rect.top) / pixel_ratio_ - 9;
+      double width = (rect.right - rect.left) / pixel_ratio_;
+      double height = (rect.bottom - rect.top) / pixel_ratio_;
       resultMap[flutter::EncodableValue("x")] = flutter::EncodableValue(x);
       resultMap[flutter::EncodableValue("y")] = flutter::EncodableValue(y);
       resultMap[flutter::EncodableValue("width")] =

@@ -37,8 +37,6 @@ class BaseFlutterWindow {
 
   void SetMaximumSize(const flutter::EncodableMap *args);
 
-  void Maximize(const flutter::EncodableMap& args);
-
   void SetTitleBarStyle(const flutter::EncodableMap& args);
 
   void SetAlwaysOnTop(const flutter::EncodableMap *args);
@@ -73,7 +71,7 @@ class BaseFlutterWindow {
 
   bool IsMaximized();
 
-  void Maximize();
+  void Maximize(bool vertically);
 
   void Unmaximize();
 

@@ -157,8 +157,9 @@ void DesktopMultiWindowPlugin::HandleMethodCall(
     result->Success();
     return;
   } else if (method_call.method_name() == "maximize") {
-    auto window_id = method_call.arguments()->LongValue();
-    MultiWindowManager::Instance()->Maximize(window_id);
+    auto *arguments =
+        std::get_if<flutter::EncodableMap>(method_call.arguments());
+    MultiWindowManager::Instance()->Maximize(arguments);
     result->Success();
     return;
   } else if (method_call.method_name() == "minimize") {
