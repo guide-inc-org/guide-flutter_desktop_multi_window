@@ -224,21 +224,32 @@ int deltaX = 0;
 int deltaY = 0;
 
 
-bool IsWindowCovered(HWND hwnd) {
+bool IsWindowCovered(HWND hwnd)
+{
   RECT rect;
-  if (!GetWindowRect(hwnd, &rect)) {
-    return true;  // Assume covered if we can't get the rect
+  if (!GetWindowRect(hwnd, &rect) || (!IsWindow(hwnd)))
+  {
+    return true; // Assume covered if we can't get the rect
   }
 
   // Check key points: Top-left and center
-  POINT topLeft = {rect.left + 5, rect.top + 5};
-  POINT bottomRight = {rect.right - 5, rect.bottom - 5};
+  POINT points[] = {
+      {rect.left + 1, rect.top + 1},                                // top-left
+      {rect.right - 1, rect.top + 1},                               // top -right
+      {rect.left + 1, rect.bottom - 1},                             // bottom-left
+      {rect.right - 1, rect.bottom - 1}                             // bottom-right
+  };
 
-  HWND topLeftWindow = WindowFromPoint(topLeft);
-  HWND bottomRightWindow = WindowFromPoint(bottomRight);
+  
+  for (const auto& pt : points) {
+        HWND topHwnd = WindowFromPoint(pt);
+        if (topHwnd != hwnd && !IsChild(hwnd, topHwnd)) {
+            return true; // Some other window is above at this point
+        }
+  }
 
-  // If both key points do not belong to our window, it's covered
-  return (topLeftWindow != hwnd && bottomRightWindow != hwnd);
+
+  return false;
 }
 
 bool IsMaximizedCheck(HWND hwnd)
@@ -509,8 +520,8 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
   
       // Set snap threshold and margin (in pixel_ratio_)
       int snapThreshold = int(round(10 * pixel_ratio_));
-      int baseMarginHorizontal = int(floor(12 / pixel_ratio_));
-      int baseMarginVertical = int(round(4 / pixel_ratio_));
+      int baseMarginHorizontal = -int(round(4 / pixel_ratio_));
+      int baseMarginVertical = -int(round(4 / pixel_ratio_));
   
       //Size of the window
       int width = cloneRect.right - cloneRect.left;
@@ -558,7 +569,6 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
               int marginVertical = baseMarginVertical;
               if (isMenu) {
                   marginHorizontal -= int(round(5 / pixel_ratio_));
-                  marginVertical -= int(round(10 / pixel_ratio_));
               }
   
               // Check snapping horizontally:
