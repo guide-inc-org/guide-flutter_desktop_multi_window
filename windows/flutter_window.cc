@@ -252,6 +252,57 @@ bool IsWindowCovered(HWND hwnd)
   return false;
 }
 
+bool IsWindowEdgeCovered(HWND hwnd, int edge)
+{
+    RECT rect;
+    if (!GetWindowRect(hwnd, &rect) || !IsWindow(hwnd)) {
+        return true; // Assume covered if we can't get the rect
+    }
+
+    const int NUM_POINTS = 5; // Check 5 points along the edge
+    POINT points[NUM_POINTS];
+    
+    // Calculate points along the specified edge
+    switch (edge) {
+        case 0: // Left edge
+            for (int i = 0; i < NUM_POINTS; i++) {
+                points[i].x = rect.left + 1;
+                points[i].y = rect.top + (rect.bottom - rect.top) * i / (NUM_POINTS - 1);
+            }
+            break;
+        case 1: // Top edge
+            for (int i = 0; i < NUM_POINTS; i++) {
+                points[i].x = rect.left + (rect.right - rect.left) * i / (NUM_POINTS - 1);
+                points[i].y = rect.top + 1;
+            }
+            break;
+        case 2: // Right edge
+            for (int i = 0; i < NUM_POINTS; i++) {
+                points[i].x = rect.right - 1;
+                points[i].y = rect.top + (rect.bottom - rect.top) * i / (NUM_POINTS - 1);
+            }
+            break;
+        case 3: // Bottom edge
+            for (int i = 0; i < NUM_POINTS; i++) {
+                points[i].x = rect.left + (rect.right - rect.left) * i / (NUM_POINTS - 1);
+                points[i].y = rect.bottom - 1;
+            }
+            break;
+        default:
+            return false;
+    }
+    
+    // Check if all points on the edge are covered
+    for (int i = 0; i < NUM_POINTS; i++) {
+        HWND topHwnd = WindowFromPoint(points[i]);
+        if (topHwnd == hwnd || IsChild(hwnd, topHwnd)) {
+            return false; // At least one point on the edge is not covered
+        }
+    }
+    
+    return true; // All points on the edge are covered
+}
+
 bool IsMaximizedCheck(HWND hwnd)
 {
   RECT windowRect;
@@ -558,7 +609,7 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
               GetWindowText(otherHwnd, title, 256);
               std::wstring titleW(title);
               if (otherHwnd == hwnd || titleW == L"Toast" || titleW == L"Dialog" ||
-                  !IsWindowVisible(otherHwnd) || IsWindowCovered(otherHwnd)) {
+                  !IsWindowVisible(otherHwnd)) {
                   continue;
               }
               RECT otherRect;
@@ -577,7 +628,8 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
               int diff = abs(cloneRect.left - otherRect.right);
               if (diff < snapThreshold &&
                   (cloneRect.top <= otherRect.bottom) &&
-                  (cloneRect.bottom >= otherRect.top)) {
+                  (cloneRect.bottom >= otherRect.top) &&
+                  !IsWindowEdgeCovered(otherHwnd, 2)) { // Check if right edge is covered
                   int candidate = otherRect.right - min(marginHorizontal, snapThreshold);
                   if (diff < minDx) {
                       minDx = diff;
@@ -589,7 +641,8 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
               diff = abs(cloneRect.right - otherRect.left);
               if (diff < snapThreshold &&
                   (cloneRect.top <= otherRect.bottom) &&
-                  (cloneRect.bottom >= otherRect.top)) {
+                  (cloneRect.bottom >= otherRect.top) &&
+                  !IsWindowEdgeCovered(otherHwnd, 0)) { // Check if left edge is covered
                   int candidate = otherRect.left - width + min(marginHorizontal, snapThreshold);
                   if (diff < minDx) {
                       minDx = diff;
@@ -603,7 +656,8 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
               diff = abs(cloneRect.top - otherRect.bottom);
               if (diff < snapThreshold &&
                   (cloneRect.left <= otherRect.right) &&
-                  (cloneRect.right >= otherRect.left)) {
+                  (cloneRect.right >= otherRect.left) &&
+                  !IsWindowEdgeCovered(otherHwnd, 3)) { // Check if bottom edge is covered
                   int candidate = otherRect.bottom - min(marginVertical, snapThreshold);
                   if (diff < minDy) {
                       minDy = diff;
@@ -615,7 +669,8 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
               diff = abs(cloneRect.bottom - otherRect.top);
               if (diff < snapThreshold &&
                   (cloneRect.left <= otherRect.right) &&
-                  (cloneRect.right >= otherRect.left)) {
+                  (cloneRect.right >= otherRect.left) &&
+                  !IsWindowEdgeCovered(otherHwnd, 1)) { // Check if top edge is covered
                   int candidate = otherRect.top - height + min(marginVertical, snapThreshold);
                   if (diff < minDy) {
                       minDy = diff;
