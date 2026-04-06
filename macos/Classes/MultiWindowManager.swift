@@ -27,6 +27,9 @@ class MultiWindowManager {
   }
 
   func attachMainWindow(window: NSWindow, _ channel: WindowChannel) {
+    // Guard: child window plugin registration calls register() again                                                                                                                      
+    // with the child's messenger, which would corrupt windows[0].                                                                                                                         
+    if windows[0] != nil { return } 
     let mainWindow = BaseFlutterWindow(window: window, channel: channel)
     mainWindow.windowChannel.methodHandler = self.handleMethodCall
     windows[0] = mainWindow
