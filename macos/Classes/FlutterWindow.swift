@@ -269,9 +269,22 @@ class FlutterWindow: BaseFlutterWindow {
       backing: .buffered, defer: false)
     let project = FlutterDartProject()
     project.dartEntrypointArguments = ["multi_window", "\(windowId)", arguments]
-    let flutterViewController = FlutterViewController(project: project)
-    window.contentViewController = flutterViewController
-
+    // Explicitly create and run the engine BEFORE attaching it to a view                                                                                                                  
+    // controller and registering plugins. Using FlutterViewController(project:)                                                                                                           
+    // lazily creates an engine that isn't started until the view loads, so                                                                                                                
+    // RegisterGeneratedPlugins ends up registering channels against an engine                                                                                                             
+    // handle the embedder hasn't fully initialized — leaving it permanently                                                                                                               
+    // invalid (`Engine handle was invalid` errors when sending platform                                                                                                                   
+    // messages later).                                                                                                                                                                    
+    let flutterEngine = FlutterEngine(                                                                                                                                                     
+      name: "multi_window_engine_\(windowId)",                                                                                                                                             
+      project: project,                                                                                                                                                                    
+      allowHeadlessExecution: false
+    )                                                                                                                                                                                      
+    flutterEngine.run(withEntrypoint: nil)                                                                                                                                               
+    let flutterViewController = FlutterViewController(engine: flutterEngine, nibName: nil, bundle: nil)                                                                                    
+    window.contentViewController = flutterViewController                                                                                                                                   
+                                                                                                                                                                                             
     FlutterMultiWindowPlugin.RegisterGeneratedPlugins?(flutterViewController)
     let plugin = flutterViewController.registrar(forPlugin: "FlutterMultiWindowPlugin")
     FlutterMultiWindowPlugin.registerInternal(with: plugin)
