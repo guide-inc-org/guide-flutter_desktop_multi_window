@@ -134,7 +134,6 @@ FlutterWindow::FlutterWindow(
     SetWindowSubclass(view_handle, SubclassProc, 1, 0);
   MoveWindow(view_handle, 0, 0, frame.right - frame.left, frame.bottom - frame.top, true);
 
-  RustDeskRegisterPlugins(flutter_controller_->engine());
   InternalMultiWindowPluginRegisterWithRegistrar(
       flutter_controller_->engine()->GetRegistrarForPlugin("DesktopMultiWindowPlugin"));
   window_channel_ = WindowChannel::RegisterWithRegistrar(
@@ -217,7 +216,7 @@ bool IsWindowCovered(HWND hwnd)
       {rect.right - 1, rect.bottom - 1}                             // bottom-right
   };
 
-  
+
   for (const auto& pt : points) {
         HWND topHwnd = WindowFromPoint(pt);
         if (topHwnd != hwnd && !IsChild(hwnd, topHwnd)) {
@@ -238,7 +237,7 @@ bool IsWindowEdgeCovered(HWND hwnd, int edge)
 
     const int NUM_POINTS = 5; // Check 5 points along the edge
     POINT points[NUM_POINTS];
-    
+
     // Calculate points along the specified edge
     switch (edge) {
         case 0: // Left edge
@@ -268,7 +267,7 @@ bool IsWindowEdgeCovered(HWND hwnd, int edge)
         default:
             return false;
     }
-    
+
     // Check if all points on the edge are covered
     for (int i = 0; i < NUM_POINTS; i++) {
         HWND topHwnd = WindowFromPoint(points[i]);
@@ -276,7 +275,7 @@ bool IsWindowEdgeCovered(HWND hwnd, int edge)
             return false; // At least one point on the edge is not covered
         }
     }
-    
+
     return true; // All points on the edge are covered
 }
 
@@ -320,7 +319,7 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
         //  when window is in full screen and we don't want that
         if (wparam && IsFullscreen()) {
             // Note:
-            // I dont know why we should -3 on the bottom. 
+            // I dont know why we should -3 on the bottom.
             //
             // NCCALCSIZE_PARAMS* sz = reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam);
             // sz->rgrc[0].bottom -= 3;
@@ -398,7 +397,7 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
         info->ptMinTrackSize.x = static_cast<LONG> (this->minimum_size_.x * this->pixel_ratio_);
       if (this->minimum_size_.y != 0)
         info->ptMinTrackSize.y = static_cast<LONG> (this->minimum_size_.y * this->pixel_ratio_);
-      
+
       if (this->maximum_size_.x != -1) {
         info->ptMaxTrackSize.x = static_cast<LONG>(this->maximum_size_.x * this->pixel_ratio_);
         if (this->maximum_size_.y == -1) {
@@ -533,7 +532,7 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
     case WM_MOVING: {
       // Get pointer to the window's RECT
       RECT* rect = reinterpret_cast<RECT*>(lparam);
-  
+
       // Update delta based on mouse position
       if (lastPoint.x == 0 && lastPoint.y == 0) {
           GetCursorPos(&lastPoint);
@@ -543,19 +542,19 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
       deltaX += currentPoint.x - lastPoint.x;
       deltaY += currentPoint.y - lastPoint.y;
       lastPoint = currentPoint;
-  
+
       // Clone rect for calculation
       RECT cloneRect = *rect;
-  
+
       // Set snap threshold and margin (in pixel_ratio_)
       int snapThreshold = int(round(10 * pixel_ratio_));
       int baseMarginHorizontal = -int(round(4 / pixel_ratio_));
       int baseMarginVertical = -int(round(4 / pixel_ratio_));
-  
+
       //Size of the window
       int width = cloneRect.right - cloneRect.left;
       int height = cloneRect.bottom - cloneRect.top;
-  
+
       // Tracking snap candidates
       bool snapCandidateX = false;
       bool snapCandidateY = false;
@@ -563,12 +562,12 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
       int candidateSnapY = cloneRect.top;
       int minDx = snapThreshold + 1; // Minimum difference for snap horizontally
       int minDy = snapThreshold + 1; // Minimum difference for snap vertically
-  
+
       //If the delta is too large, break the loop
       if (abs(deltaX) > snapThreshold * 2 || abs(deltaY) > snapThreshold * 2) {
           break;
       }
-  
+
       // If the movement is small (less than 5 pixels), update cloneRect based on delta
       if (abs(lastRect.left - cloneRect.left) < 5 && abs(lastRect.top - cloneRect.top) < 5) {
           cloneRect.left = lastRect.left + deltaX;
@@ -576,7 +575,7 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
           cloneRect.right = cloneRect.left + width;
           cloneRect.bottom = cloneRect.top + height;
       }
-  
+
       MultiWindowManager *manager = MultiWindowManager::Instance();
       if (manager) {
           for (auto &w : manager->windows_) {
@@ -592,14 +591,14 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
               RECT otherRect;
               GetWindowRect(otherHwnd, &otherRect);
               bool isMenu = (titleW == L"FLUTTERVIEW");
-  
+
               // Set margin for each window
               int marginHorizontal = baseMarginHorizontal;
               int marginVertical = baseMarginVertical;
               if (isMenu) {
                   marginHorizontal -= int(round(5 / pixel_ratio_));
               }
-  
+
               // Check snapping horizontally:
               // 1. If the left edge of cloneRect is close to the right edge of another window.
               int diff = abs(cloneRect.left - otherRect.right);
@@ -627,7 +626,7 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
                       snapCandidateX = true;
                   }
               }
-  
+
               // Check snapping vertically:
               // 1. If the top edge of cloneRect is close to the bottom edge of another window.
               diff = abs(cloneRect.top - otherRect.bottom);
@@ -657,7 +656,7 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
               }
           } // end for each window
       }
-  
+
       // Set unsnap threshold: if the position of cloneRect is too far from the candidate, then unsnap
       const int unsnapThreshold = snapThreshold + 5;
       bool finalSnapX = snapCandidateX;
@@ -672,7 +671,7 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
               finalSnapY = false;
           }
       }
-  
+
       // Update RECT based on final snap result
       if (finalSnapX || finalSnapY) {
           rect->left = finalSnapX ? candidateSnapX : cloneRect.left;
@@ -692,7 +691,7 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT message, WPARAM wparam, LP
       }
       break;
   }
-  
+
 
 
     case WM_NCACTIVATE: {
