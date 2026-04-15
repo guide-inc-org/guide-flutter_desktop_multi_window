@@ -261,6 +261,9 @@ class FlutterWindow: BaseFlutterWindow {
 
   weak var delegate: WindowManagerDelegate?
 
+  private var becomeActiveObserver: NSObjectProtocol?
+  private var resignActiveObserver: NSObjectProtocol?
+
   init(id: Int64, arguments: String) {
     windowId = id
     window = FlutterWindowInner(
@@ -285,9 +288,27 @@ class FlutterWindow: BaseFlutterWindow {
     window.isReleasedWhenClosed = false
     window.titleVisibility = .hidden
     window.titlebarAppearsTransparent = true
+
+    // Restart the child Flutter engine's render pipeline (CVDisplayLink)
+    // when the app becomes active again. Without this, macOS stops vsync
+    // for child windows when the app is inactive and never restarts it.
+    becomeActiveObserver = NotificationCenter.default.addObserver(
+      forName: NSApplication.didBecomeActiveNotification,
+      object: nil, queue: .main
+    ) { [weak self] notification in
+      self?.handleAppActivation(notification)
+    }
+    resignActiveObserver = NotificationCenter.default.addObserver(
+      forName: NSApplication.didResignActiveNotification,
+      object: nil, queue: .main
+    ) { [weak self] notification in
+      self?.handleAppActivation(notification)
+    }
   }
 
   deinit {
+    if let o = becomeActiveObserver { NotificationCenter.default.removeObserver(o) }
+    if let o = resignActiveObserver { NotificationCenter.default.removeObserver(o) }
     debugPrint("release window resource")
     window.delegate = nil
     if let flutterViewController = window.contentViewController as? FlutterViewController {
@@ -295,6 +316,14 @@ class FlutterWindow: BaseFlutterWindow {
     }
     window.contentViewController = nil
     window.windowController = nil
+  }
+
+  /// Tell the child Flutter engine about app activation changes so it
+  /// restarts its render pipeline (CVDisplayLink / vsync).
+  private func handleAppActivation(_ notification: Notification) {
+    if let controller = window.contentViewController as? FlutterViewController {
+      controller.engine.handleDidChangeOcclusionState(notification)
+    }
   }
 }
 
